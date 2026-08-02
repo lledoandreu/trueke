@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/sample_products.dart';
 import 'widgets/category_chip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/product_card.dart';
@@ -13,11 +14,11 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          children: const [
-            HomeHeader(),
-            SearchBarWidget(),
+          children: [
+            const HomeHeader(),
+            const SearchBarWidget(),
 
-            Padding(
+            const Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
                 'Categorías',
@@ -25,7 +26,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            SizedBox(
+            const SizedBox(
               height: 110,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -45,7 +46,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            Padding(
+            const Padding(
               padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
               child: Text(
                 'Recomendados',
@@ -53,34 +54,17 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            ProductCard(
-              title: 'iPhone 14 Pro',
-              location: 'Valencia',
-              user: 'Carlos',
-              icon: Icons.phone_iphone,
-            ),
+            ProductCard(product: sampleProducts[0]),
+            ProductCard(product: sampleProducts[1]),
+            ProductCard(product: sampleProducts[2]),
 
-            ProductCard(
-              title: 'Bicicleta MTB',
-              location: 'Albacete',
-              user: 'Laura',
-              icon: Icons.directions_bike,
-            ),
-
-            ProductCard(
-              title: 'PlayStation 5',
-              location: 'Madrid',
-              user: 'Miguel',
-              icon: Icons.sports_esports,
-            ),
-
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
-        destinations: [
+        destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
