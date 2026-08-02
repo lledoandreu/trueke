@@ -1,41 +1,86 @@
 import 'package:flutter/material.dart';
 
-class HomePage extends StatefulWidget {
+import 'widgets/category_chip.dart';
+import 'widgets/home_header.dart';
+import 'widgets/product_card.dart';
+import 'widgets/search_bar_widget.dart';
+
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    Container(
-      color: Colors.red,
-      child: const Center(
-        child: Text(
-          'HOME NUEVA',
-          style: TextStyle(fontSize: 40, color: Colors.white),
-        ),
-      ),
-    ),
-    const Center(child: Text('Buscar')),
-    const Center(child: Text('Publicar')),
-    const Center(child: Text('Chats')),
-    const Center(child: Text('Perfil')),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: SafeArea(
+        child: ListView(
+          children: const [
+            HomeHeader(),
+            SearchBarWidget(),
+
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Categorías',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            SizedBox(
+              height: 110,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    CategoryChip(
+                      icon: Icons.phone_iphone,
+                      label: 'Electrónica',
+                    ),
+                    CategoryChip(icon: Icons.checkroom, label: 'Moda'),
+                    CategoryChip(icon: Icons.chair, label: 'Hogar'),
+                    CategoryChip(icon: Icons.sports_esports, label: 'Gaming'),
+                    CategoryChip(icon: Icons.directions_bike, label: 'Deporte'),
+                  ],
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Text(
+                'Recomendados',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            ProductCard(
+              title: 'iPhone 14 Pro',
+              location: 'Valencia',
+              user: 'Carlos',
+              icon: Icons.phone_iphone,
+            ),
+
+            ProductCard(
+              title: 'Bicicleta MTB',
+              location: 'Albacete',
+              user: 'Laura',
+              icon: Icons.directions_bike,
+            ),
+
+            ProductCard(
+              title: 'PlayStation 5',
+              location: 'Madrid',
+              user: 'Miguel',
+              icon: Icons.sports_esports,
+            ),
+
+            SizedBox(height: 20),
+          ],
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
-        destinations: const [
+        selectedIndex: 0,
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
