@@ -11,54 +11,91 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    final int crossAxisCount;
+
+    if (width < 700) {
+      crossAxisCount = 2;
+    } else if (width < 1000) {
+      crossAxisCount = 3;
+    } else if (width < 1400) {
+      crossAxisCount = 4;
+    } else {
+      crossAxisCount = 5;
+    }
+
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          children: [
-            const HomeHeader(),
-            const SearchBarWidget(),
+        child: CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: HomeHeader()),
 
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Categorías',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
+            const SliverToBoxAdapter(child: SearchBarWidget()),
 
-            const SizedBox(
-              height: 110,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    CategoryChip(
-                      icon: Icons.phone_iphone,
-                      label: 'Electrónica',
-                    ),
-                    CategoryChip(icon: Icons.checkroom, label: 'Moda'),
-                    CategoryChip(icon: Icons.chair, label: 'Hogar'),
-                    CategoryChip(icon: Icons.sports_esports, label: 'Gaming'),
-                    CategoryChip(icon: Icons.directions_bike, label: 'Deporte'),
-                  ],
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Categorías',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
 
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Text(
-                'Recomendados',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            const SliverToBoxAdapter(
+              child: SizedBox(
+                height: 110,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      CategoryChip(
+                        icon: Icons.phone_iphone,
+                        label: 'Electrónica',
+                      ),
+                      CategoryChip(icon: Icons.checkroom, label: 'Moda'),
+                      CategoryChip(icon: Icons.chair, label: 'Hogar'),
+                      CategoryChip(icon: Icons.sports_esports, label: 'Gaming'),
+                      CategoryChip(
+                        icon: Icons.directions_bike,
+                        label: 'Deporte',
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
 
-            ProductCard(product: sampleProducts[0]),
-            ProductCard(product: sampleProducts[1]),
-            ProductCard(product: sampleProducts[2]),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+                child: Text(
+                  'Recomendados',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
 
-            const SizedBox(height: 20),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) =>
+                      ProductCard(product: sampleProducts[index]),
+                  childCount: sampleProducts.length,
+                ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.62,
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),

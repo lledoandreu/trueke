@@ -10,108 +10,162 @@ class ProductCard extends StatelessWidget {
 
   const ProductCard({super.key, required this.product});
 
-  String _tradeLabel() {
+  String get tradeLabel {
     switch (product.tradeType) {
       case TradeType.trade:
-        return 'Trueque';
+        return 'TRUEQUE';
       case TradeType.sale:
-        return 'Venta';
+        return 'VENTA';
       case TradeType.tradeAndMoney:
-        return 'Trueque + dinero';
+        return 'TRUEQUE + €';
     }
   }
 
-  IconData _tradeIcon() {
+  Color get tradeColor {
     switch (product.tradeType) {
       case TradeType.trade:
-        return Icons.swap_horiz;
+        return Colors.green;
       case TradeType.sale:
-        return Icons.euro;
+        return Colors.blue;
       case TradeType.tradeAndMoney:
-        return Icons.swap_horiz;
+        return Colors.orange;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: product.imageUrl.isNotEmpty
-                  ? Image.asset(product.imageUrl, fit: BoxFit.cover)
-                  : Container(
-                      color: const Color(0xFFE5E7EB),
+      elevation: 2,
+      margin: const EdgeInsets.all(4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {},
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: product.imageUrl.isNotEmpty
+                        ? Image.asset(product.imageUrl, fit: BoxFit.cover)
+                        : Container(
+                            color: const Color(0xFFE5E7EB),
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_outlined,
+                                size: 70,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                  ),
+
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: tradeColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        tradeLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const Positioned(
+                    top: 10,
+                    right: 10,
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.white,
                       child: Icon(
-                        Icons.image_outlined,
-                        size: 72,
+                        Icons.favorite_border,
+                        size: 18,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.title,
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  if (product.price != null)
+                    Text(
+                      '${product.price!.toStringAsFixed(0)} €',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
                     ),
-            ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.title, style: AppTextStyles.title),
+                  const SizedBox(height: 8),
 
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    Icon(_tradeIcon(), size: 18),
-                    const SizedBox(width: 6),
-                    Text(_tradeLabel()),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                if (product.price != null)
-                  Text(
-                    '${product.price!.toStringAsFixed(0)} €',
-                    style: AppTextStyles.body,
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          product.location,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
-                Text(product.condition, style: AppTextStyles.body),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 18),
-                    const SizedBox(width: 4),
-                    Text(product.location),
-                  ],
-                ),
-
-                const SizedBox(height: 6),
-
-                Row(
-                  children: [
-                    const Icon(Icons.person_outline, size: 18),
-                    const SizedBox(width: 4),
-                    Text(product.owner),
-                  ],
-                ),
-              ],
+                  Text(
+                    product.owner,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
