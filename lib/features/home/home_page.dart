@@ -4,6 +4,7 @@ import '../../data/sample_products.dart';
 import 'widgets/category_chip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/product_card.dart';
+import 'widgets/promo_banner.dart';
 import 'widgets/search_bar_widget.dart';
 
 class HomePage extends StatelessWidget {
@@ -33,9 +34,11 @@ class HomePage extends StatelessWidget {
 
             const SliverToBoxAdapter(child: SearchBarWidget()),
 
+            const SliverToBoxAdapter(child: PromoBanner()),
+
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Text(
                   'Categorías',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/product.dart';
+import '../../products/product_detail_page.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -41,7 +42,12 @@ class ProductCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProductDetailPage()),
+          );
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -87,16 +93,21 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  const Positioned(
+                  Positioned(
                     top: 10,
                     right: 10,
                     child: CircleAvatar(
                       radius: 16,
                       backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: 18,
-                        color: Colors.black87,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        splashRadius: 16,
+                        icon: const Icon(
+                          Icons.favorite_border,
+                          size: 18,
+                          color: Colors.black87,
+                        ),
+                        onPressed: () {},
                       ),
                     ),
                   ),
@@ -129,6 +140,13 @@ class ProductCard extends StatelessWidget {
                     ),
 
                   const SizedBox(height: 8),
+
+                  Text(
+                    product.condition,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+
+                  const SizedBox(height: 6),
 
                   Row(
                     children: [
