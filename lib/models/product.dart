@@ -9,7 +9,10 @@ class Product {
   final String location;
   final String owner;
   final String condition;
-  final bool favorite;
+
+  // NUEVOS CAMPOS
+  final String description;
+  final String wanted;
 
   const Product({
     required this.id,
@@ -20,6 +23,7 @@ class Product {
     required this.location,
     required this.owner,
     required this.condition,
-    this.favorite = false,
+    required this.description,
+    required this.wanted,
   });
 }

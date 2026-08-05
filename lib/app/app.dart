@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../features/home/home_page.dart';
+import 'router/app_router.dart';
 
 class TruekeApp extends StatelessWidget {
   const TruekeApp({super.key});
@@ -12,7 +12,8 @@ class TruekeApp extends StatelessWidget {
       title: 'Trueke',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const HomePage(),
+      initialRoute: '/',
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

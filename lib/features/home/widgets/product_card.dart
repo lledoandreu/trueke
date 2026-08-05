@@ -4,7 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/product.dart';
-import '../../products/product_detail_page.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -43,10 +42,7 @@ class ProductCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProductDetailPage()),
-          );
+          Navigator.pushNamed(context, '/product', arguments: product);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +65,6 @@ class ProductCard extends StatelessWidget {
                             ),
                           ),
                   ),
-
                   Positioned(
                     top: 10,
                     left: 10,
@@ -92,7 +87,6 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 10,
                     right: 10,
@@ -114,7 +108,6 @@ class ProductCard extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -126,9 +119,7 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.title,
                   ),
-
                   const SizedBox(height: 6),
-
                   if (product.price != null)
                     Text(
                       '${product.price!.toStringAsFixed(0)} €',
@@ -138,16 +129,12 @@ class ProductCard extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                     ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     product.condition,
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
-
                   const SizedBox(height: 6),
-
                   Row(
                     children: [
                       const Icon(
@@ -168,9 +155,7 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
                     product.owner,
                     overflow: TextOverflow.ellipsis,
