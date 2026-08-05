@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import '../../features/home/home_page.dart';
 import '../../features/products/product_detail_page.dart';
 import '../../models/product.dart';
+import '../routes/app_routes.dart';
 
 class AppRouter {
   const AppRouter._();
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case '/':
+      case AppRoutes.home:
         return MaterialPageRoute(builder: (_) => const HomePage());
 
-      case '/product':
+      case AppRoutes.product:
         final product = settings.arguments as Product;
 
         return MaterialPageRoute(

@@ -1,48 +1,50 @@
 import '../models/product.dart';
 
-const sampleProducts = [
+final List<Product> sampleProducts = [
   Product(
     id: '1',
     title: 'iPhone 14 Pro',
-    imageUrl: 'assets/images/iphone14.jpg',
+    images: ['assets/images/iphone14.jpg'],
     price: 750,
     tradeType: TradeType.tradeAndMoney,
+    category: 'Electrónica',
     location: 'Valencia',
     owner: 'Carlos',
     condition: 'Como nuevo',
     description:
-        'iPhone 14 Pro de 128 GB en color azul. Siempre utilizado con funda y protector de pantalla. Sin golpes ni arañazos. Batería en excelente estado y funcionamiento perfecto. Se entrega con caja original.',
+        'iPhone 14 Pro en perfecto estado, muy cuidado, con caja original y accesorios.',
     wanted:
-        'Busco un MacBook Air M2, un iPad Pro reciente o una cámara Sony Alpha. También valoro otros dispositivos Apple o tecnología de valor similar.',
+        'Busco MacBook Air M2, iPad Pro reciente o productos tecnológicos similares.',
+    createdAt: DateTime(2026, 8, 1),
   ),
 
   Product(
     id: '2',
     title: 'Bicicleta MTB',
-    imageUrl: '',
+    images: [],
     price: 350,
     tradeType: TradeType.sale,
+    category: 'Deporte',
     location: 'Albacete',
     owner: 'Laura',
     condition: 'Buen estado',
-    description:
-        'Bicicleta de montaña de aluminio, talla M. Revisada recientemente y lista para usar. Ideal para rutas de montaña y caminos.',
-    wanted:
-        'Principalmente venta, aunque podría aceptar un smartwatch Garmin o material de ciclismo de calidad.',
+    description: 'Bicicleta MTB revisada y lista para usar. Tiene poco uso.',
+    wanted: 'Acepto ofertas relacionadas con ciclismo o venta directa.',
+    createdAt: DateTime(2026, 7, 28),
   ),
 
   Product(
     id: '3',
     title: 'PlayStation 5',
-    imageUrl: '',
+    images: [],
     price: null,
     tradeType: TradeType.trade,
+    category: 'Gaming',
     location: 'Madrid',
     owner: 'Miguel',
     condition: 'Nueva',
-    description:
-        'PlayStation 5 prácticamente nueva. Incluye mando DualSense, cables originales y caja. Muy poco uso.',
-    wanted:
-        'Busco una Xbox Series X, un PC Gaming o componentes informáticos equivalentes.',
+    description: 'PlayStation 5 nueva, sin uso, con embalaje original.',
+    wanted: 'Busco ordenador gaming o productos tecnológicos equivalentes.',
+    createdAt: DateTime(2026, 7, 25),
   ),
 ];

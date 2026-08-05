@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -42,7 +43,7 @@ class ProductCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () {
-          Navigator.pushNamed(context, '/product', arguments: product);
+          Navigator.pushNamed(context, AppRoutes.product, arguments: product);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
