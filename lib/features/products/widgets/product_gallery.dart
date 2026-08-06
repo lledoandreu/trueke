@@ -7,14 +7,31 @@ class ProductGallery extends StatelessWidget {
 
   const ProductGallery({super.key, required this.product});
 
+  Widget _buildImage() {
+    if (product.images.isEmpty) {
+      return Container(
+        color: const Color(0xFFF2F3F5),
+        child: const Center(
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            size: 80,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    return Image.asset(product.images.first, fit: BoxFit.cover);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 360,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Image.asset(product.imageUrl, fit: BoxFit.cover),
-      ),
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      flexibleSpace: FlexibleSpaceBar(background: _buildImage()),
       actions: [
         IconButton(icon: const Icon(Icons.favorite_border), onPressed: () {}),
         IconButton(icon: const Icon(Icons.share_outlined), onPressed: () {}),

@@ -1,12 +1,13 @@
-import '../../../data/sample_products.dart';
 import '../../../models/product.dart';
 
-class ProductRepository {
-  const ProductRepository();
+abstract class ProductRepository {
+  Future<List<Product>> getProducts();
 
-  Future<List<Product>> getProducts() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+  Future<Product?> getProductById(String id);
 
-    return sampleProducts;
-  }
+  Future<void> createProduct(Product product);
+
+  Future<void> updateProduct(Product product);
+
+  Future<void> deleteProduct(String id);
 }

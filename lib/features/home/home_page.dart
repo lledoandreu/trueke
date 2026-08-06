@@ -125,32 +125,6 @@ class HomePage extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Buscar'),
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_outline),
-            selectedIcon: Icon(Icons.add_circle),
-            label: 'Publicar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat),
-            label: 'Chats',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
-      ),
-    );
+;
   }
 }

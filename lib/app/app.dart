@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'routes/app_routes.dart';
+import 'shell/main_shell.dart';
 
 class TruekeApp extends StatelessWidget {
   const TruekeApp({super.key});
@@ -15,6 +16,7 @@ class TruekeApp extends StatelessWidget {
       theme: AppTheme.light,
       initialRoute: AppRoutes.home,
       onGenerateRoute: AppRouter.onGenerateRoute,
+      home: const MainShell(),
     );
   }
 }

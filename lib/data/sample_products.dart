@@ -1,50 +1,50 @@
 import '../models/product.dart';
 
-final List<Product> sampleProducts = [
+final sampleProducts = [
   Product(
     id: '1',
     title: 'iPhone 14 Pro',
     images: ['assets/images/iphone14.jpg'],
     price: 750,
     tradeType: TradeType.tradeAndMoney,
-    category: 'Electrónica',
     location: 'Valencia',
     owner: 'Carlos',
     condition: 'Como nuevo',
+    category: 'Electrónica',
     description:
-        'iPhone 14 Pro en perfecto estado, muy cuidado, con caja original y accesorios.',
+        'iPhone 14 Pro en perfecto estado. Siempre utilizado con funda y protector de pantalla. Incluye caja original y accesorios.',
     wanted:
-        'Busco MacBook Air M2, iPad Pro reciente o productos tecnológicos similares.',
+        'Busco MacBook Air M2, iPad Pro reciente o cámara Sony Alpha. También acepto tecnología equivalente.',
     createdAt: DateTime(2026, 8, 1),
   ),
-
   Product(
     id: '2',
     title: 'Bicicleta MTB',
     images: [],
     price: 350,
     tradeType: TradeType.sale,
-    category: 'Deporte',
     location: 'Albacete',
     owner: 'Laura',
     condition: 'Buen estado',
-    description: 'Bicicleta MTB revisada y lista para usar. Tiene poco uso.',
-    wanted: 'Acepto ofertas relacionadas con ciclismo o venta directa.',
-    createdAt: DateTime(2026, 7, 28),
+    category: 'Deporte',
+    description:
+        'Bicicleta de montaña revisada y lista para usar. Ideal para rutas y caminos.',
+    wanted: 'Acepto ofertas relacionadas con deporte o movilidad.',
+    createdAt: DateTime(2026, 8, 2),
   ),
-
   Product(
     id: '3',
     title: 'PlayStation 5',
     images: [],
     price: null,
     tradeType: TradeType.trade,
-    category: 'Gaming',
     location: 'Madrid',
     owner: 'Miguel',
     condition: 'Nueva',
-    description: 'PlayStation 5 nueva, sin uso, con embalaje original.',
-    wanted: 'Busco ordenador gaming o productos tecnológicos equivalentes.',
-    createdAt: DateTime(2026, 7, 25),
+    category: 'Gaming',
+    description:
+        'PlayStation 5 nueva sin estrenar. Incluye mando original y embalaje.',
+    wanted: 'Busco portátil gaming o productos tecnológicos de valor similar.',
+    createdAt: DateTime(2026, 8, 3),
   ),
 ];

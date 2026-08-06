@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/product.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends ConsumerWidget {
   final Product product;
 
-  const ProductCard({super.key, required this.product});
+  const ProductCard({
+    super.key,
+    required this.product,
+  });
 
   String get tradeLabel {
     switch (product.tradeType) {
@@ -34,16 +39,25 @@ class ProductCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider.notifier);
+    final isFavorite = favorites.isFavorite(product);
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.all(4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () {
-          Navigator.pushNamed(context, AppRoutes.product, arguments: product);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.product,
+            arguments: product,
+          );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +68,10 @@ class ProductCard extends StatelessWidget {
                 children: [
                   Positioned.fill(
                     child: product.imageUrl.isNotEmpty
-                        ? Image.asset(product.imageUrl, fit: BoxFit.cover)
+                        ? Image.asset(
+                            product.imageUrl,
+                            fit: BoxFit.cover,
+                          )
                         : Container(
                             color: const Color(0xFFE5E7EB),
                             child: const Center(
@@ -66,6 +83,7 @@ class ProductCard extends StatelessWidget {
                             ),
                           ),
                   ),
+
                   Positioned(
                     top: 10,
                     left: 10,
@@ -88,6 +106,7 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   Positioned(
                     top: 10,
                     right: 10,
@@ -97,18 +116,27 @@ class ProductCard extends StatelessWidget {
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         splashRadius: 16,
-                        icon: const Icon(
-                          Icons.favorite_border,
+                        icon: Icon(
+                          isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
                           size: 18,
-                          color: Colors.black87,
+                          color: isFavorite
+                              ? Colors.red
+                              : Colors.black87,
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          ref
+                              .read(favoritesProvider.notifier)
+                              .toggleFavorite(product);
+                        },
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -121,6 +149,7 @@ class ProductCard extends StatelessWidget {
                     style: AppTextStyles.title,
                   ),
                   const SizedBox(height: 6),
+
                   if (product.price != null)
                     Text(
                       '${product.price!.toStringAsFixed(0)} €',
@@ -130,12 +159,19 @@ class ProductCard extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                     ),
+
                   const SizedBox(height: 8),
+
                   Text(
                     product.condition,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
                   ),
+
                   const SizedBox(height: 6),
+
                   Row(
                     children: [
                       const Icon(
@@ -156,7 +192,9 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     product.owner,
                     overflow: TextOverflow.ellipsis,
