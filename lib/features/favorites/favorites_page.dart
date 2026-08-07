@@ -9,35 +9,49 @@ class FavoritesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favorites = ref.watch(favoritesProvider);
+    final favoritesAsync = ref.watch(favoritesProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Favoritos'),
       ),
-      body: favorites.isEmpty
-          ? const Center(
+      body: favoritesAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Text(
+            'Error cargando favoritos: $error',
+          ),
+        ),
+        data: (favorites) {
+          if (favorites.isEmpty) {
+            return const Center(
               child: Text(
                 'No tienes productos favoritos',
                 style: TextStyle(fontSize: 16),
               ),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.62,
-              ),
-              itemCount: favorites.length,
-              itemBuilder: (context, index) {
-                return ProductCard(
-                  product: favorites[index],
-                );
-              },
+            );
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.62,
             ),
+            itemCount: favorites.length,
+            itemBuilder: (context, index) {
+              return ProductCard(
+                product: favorites[index],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
