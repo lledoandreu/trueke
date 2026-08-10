@@ -47,4 +47,34 @@ class Product {
 
     return images.first;
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'images': images,
+    'price': price,
+    'tradeType': tradeType.name,
+    'category': category,
+    'location': location,
+    'owner': owner,
+    'condition': condition,
+    'description': description,
+    'wanted': wanted,
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory Product.fromJson(Map<String, dynamic> json) => Product(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    images: List<String>.from(json['images'] as List<dynamic>),
+    price: (json['price'] as num?)?.toDouble(),
+    tradeType: TradeType.values.byName(json['tradeType'] as String),
+    category: json['category'] as String,
+    location: json['location'] as String,
+    owner: json['owner'] as String,
+    condition: json['condition'] as String,
+    description: json['description'] as String,
+    wanted: json['wanted'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+  );
 }

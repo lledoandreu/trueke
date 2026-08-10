@@ -12,18 +12,11 @@ class FavoritesPage extends ConsumerWidget {
     final favoritesAsync = ref.watch(favoritesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favoritos'),
-      ),
+      appBar: AppBar(title: const Text('Favoritos')),
       body: favoritesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stackTrace) => Center(
-          child: Text(
-            'Error cargando favoritos: $error',
-          ),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) =>
+            Center(child: Text('Error cargando favoritos: $error')),
         data: (favorites) {
           if (favorites.isEmpty) {
             return const Center(
@@ -36,8 +29,7 @@ class FavoritesPage extends ConsumerWidget {
 
           return GridView.builder(
             padding: const EdgeInsets.all(16),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
@@ -45,9 +37,7 @@ class FavoritesPage extends ConsumerWidget {
             ),
             itemCount: favorites.length,
             itemBuilder: (context, index) {
-              return ProductCard(
-                product: favorites[index],
-              );
+              return ProductCard(product: favorites[index]);
             },
           );
         },

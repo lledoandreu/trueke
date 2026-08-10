@@ -7,14 +7,12 @@ import 'widgets/product_description.dart';
 import 'widgets/product_info.dart';
 import 'widgets/seller_card.dart';
 import 'widgets/trade_info.dart';
+import '../trades/send_trade_offer_page.dart';
 
 class ProductDetailPage extends ConsumerWidget {
   final Product product;
 
-  const ProductDetailPage({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailPage({super.key, required this.product});
 
   Widget _buildProductImage() {
     if (product.imageUrl.isEmpty) {
@@ -35,10 +33,7 @@ class ProductDetailPage extends ConsumerWidget {
     return SizedBox(
       height: 420,
       width: double.infinity,
-      child: Image.asset(
-        product.imageUrl,
-        fit: BoxFit.cover,
-      ),
+      child: Image.asset(product.imageUrl, fit: BoxFit.cover),
     );
   }
 
@@ -53,7 +48,11 @@ class ProductDetailPage extends ConsumerWidget {
         child: SizedBox(
           height: 52,
           child: FilledButton.icon(
-            onPressed: () {},
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SendTradeOfferPage(product: product),
+              ),
+            ),
             icon: const Icon(Icons.swap_horiz),
             label: const Text('Proponer intercambio'),
           ),
@@ -89,12 +88,8 @@ class ProductDetailPage extends ConsumerWidget {
                         backgroundColor: Colors.white,
                         child: IconButton(
                           icon: Icon(
-                            isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: isFavorite
-                                ? Colors.red
-                                : Colors.black,
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : Colors.black,
                           ),
                           onPressed: () {
                             ref

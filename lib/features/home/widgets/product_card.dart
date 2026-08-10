@@ -11,10 +11,7 @@ import '../../../models/product.dart';
 class ProductCard extends ConsumerWidget {
   final Product product;
 
-  const ProductCard({
-    super.key,
-    required this.product,
-  });
+  const ProductCard({super.key, required this.product});
 
   String get tradeLabel {
     switch (product.tradeType) {
@@ -46,18 +43,12 @@ class ProductCard extends ConsumerWidget {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.all(4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () {
-          Navigator.pushNamed(
-            context,
-            AppRoutes.product,
-            arguments: product,
-          );
+          Navigator.pushNamed(context, AppRoutes.product, arguments: product);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,10 +59,7 @@ class ProductCard extends ConsumerWidget {
                 children: [
                   Positioned.fill(
                     child: product.imageUrl.isNotEmpty
-                        ? Image.asset(
-                            product.imageUrl,
-                            fit: BoxFit.cover,
-                          )
+                        ? Image.asset(product.imageUrl, fit: BoxFit.cover)
                         : Container(
                             color: const Color(0xFFE5E7EB),
                             child: const Center(
@@ -117,13 +105,9 @@ class ProductCard extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         splashRadius: 16,
                         icon: Icon(
-                          isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
                           size: 18,
-                          color: isFavorite
-                              ? Colors.red
-                              : Colors.black87,
+                          color: isFavorite ? Colors.red : Colors.black87,
                         ),
                         onPressed: () {
                           ref
@@ -164,10 +148,7 @@ class ProductCard extends ConsumerWidget {
 
                   Text(
                     product.condition,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
 
                   const SizedBox(height: 6),

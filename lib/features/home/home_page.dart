@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../products/providers/products_provider.dart';
+import '../products/providers/product_filters_provider.dart';
 import 'widgets/category_chip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/product_card.dart';
@@ -13,7 +13,8 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(productsProvider);
+    final productsAsync = ref.watch(filteredProductsProvider);
+    final filters = ref.watch(productFiltersProvider);
 
     final width = MediaQuery.of(context).size.width;
 
@@ -49,7 +50,7 @@ class HomePage extends ConsumerWidget {
               ),
             ),
 
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: SizedBox(
                 height: 110,
                 child: SingleChildScrollView(
@@ -60,13 +61,42 @@ class HomePage extends ConsumerWidget {
                       CategoryChip(
                         icon: Icons.phone_iphone,
                         label: 'Electrónica',
+                        selected: filters.category == 'Electrónica',
+                        onTap: () => ref
+                            .read(productFiltersProvider.notifier)
+                            .toggleCategory('Electrónica'),
                       ),
-                      CategoryChip(icon: Icons.checkroom, label: 'Moda'),
-                      CategoryChip(icon: Icons.chair, label: 'Hogar'),
-                      CategoryChip(icon: Icons.sports_esports, label: 'Gaming'),
+                      CategoryChip(
+                        icon: Icons.checkroom,
+                        label: 'Moda',
+                        selected: filters.category == 'Moda',
+                        onTap: () => ref
+                            .read(productFiltersProvider.notifier)
+                            .toggleCategory('Moda'),
+                      ),
+                      CategoryChip(
+                        icon: Icons.chair,
+                        label: 'Hogar',
+                        selected: filters.category == 'Hogar',
+                        onTap: () => ref
+                            .read(productFiltersProvider.notifier)
+                            .toggleCategory('Hogar'),
+                      ),
+                      CategoryChip(
+                        icon: Icons.sports_esports,
+                        label: 'Gaming',
+                        selected: filters.category == 'Gaming',
+                        onTap: () => ref
+                            .read(productFiltersProvider.notifier)
+                            .toggleCategory('Gaming'),
+                      ),
                       CategoryChip(
                         icon: Icons.directions_bike,
                         label: 'Deporte',
+                        selected: filters.category == 'Deporte',
+                        onTap: () => ref
+                            .read(productFiltersProvider.notifier)
+                            .toggleCategory('Deporte'),
                       ),
                     ],
                   ),
@@ -74,11 +104,11 @@ class HomePage extends ConsumerWidget {
               ),
             ),
 
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
                 child: Text(
-                  'Recomendados',
+                  filters.hasActiveFilters ? 'Resultados' : 'Recomendados',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -104,6 +134,18 @@ class HomePage extends ConsumerWidget {
                 );
               },
               data: (products) {
+                if (products.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(
+                        child: Text(
+                          'No hemos encontrado artículos con esos filtros.',
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 return SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(

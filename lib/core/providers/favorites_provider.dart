@@ -11,8 +11,7 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
   Future<List<Product>> build() async {
     final preferences = await SharedPreferences.getInstance();
 
-    final favoriteIds =
-        preferences.getStringList(_favoritesKey) ?? [];
+    final favoriteIds = preferences.getStringList(_favoritesKey) ?? [];
 
     final productsAsync = ref.watch(productsProvider);
 
@@ -28,10 +27,7 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
   }
 
   bool isFavorite(Product product) {
-    return state.valueOrNull?.any(
-          (item) => item.id == product.id,
-        ) ??
-        false;
+    return state.valueOrNull?.any((item) => item.id == product.id) ?? false;
   }
 
   Future<void> toggleFavorite(Product product) async {
@@ -42,30 +38,20 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
     );
 
     final updatedFavorites = isCurrentlyFavorite
-        ? currentFavorites
-            .where((item) => item.id != product.id)
-            .toList()
-        : [
-            ...currentFavorites,
-            product,
-          ];
+        ? currentFavorites.where((item) => item.id != product.id).toList()
+        : [...currentFavorites, product];
 
     state = AsyncData(updatedFavorites);
 
     final preferences = await SharedPreferences.getInstance();
 
-    final ids = updatedFavorites
-        .map((product) => product.id)
-        .toList();
+    final ids = updatedFavorites.map((product) => product.id).toList();
 
-    await preferences.setStringList(
-      _favoritesKey,
-      ids,
-    );
+    await preferences.setStringList(_favoritesKey, ids);
   }
 }
 
 final favoritesProvider =
     AsyncNotifierProvider<FavoritesNotifier, List<Product>>(
-  FavoritesNotifier.new,
-);
+      FavoritesNotifier.new,
+    );
