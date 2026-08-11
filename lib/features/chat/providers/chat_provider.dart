@@ -75,6 +75,68 @@ class ChatNotifier extends AsyncNotifier<List<ChatConversation>> {
         .toList();
   }
 
+  Future<String> startConversation({
+    required String productId,
+    required String productTitle,
+    required String owner,
+    required String message,
+  }) async {
+    final conversations = state.valueOrNull ?? _initialConversations();
+
+    final existingIndex = conversations.indexWhere(
+      (conversation) =>
+          conversation.id == 'product-$productId',
+    );
+
+    if (existingIndex != -1) {
+      final conversation = conversations[existingIndex];
+
+      final updatedConversation = conversation.copyWith(
+        messages: [
+          ...conversation.messages,
+          ChatMessage(
+            id: DateTime.now().microsecondsSinceEpoch.toString(),
+            text: message,
+            isMine: true,
+            createdAt: DateTime.now(),
+          ),
+        ],
+      );
+
+      final updated = [...conversations];
+      updated[existingIndex] = updatedConversation;
+
+      state = AsyncData(updated);
+      await _save(updated);
+
+      return updatedConversation.id;
+    }
+
+    final conversation = ChatConversation(
+      id: 'product-$productId',
+      name: owner,
+      product: productTitle,
+      messages: [
+        ChatMessage(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          text: message,
+          isMine: true,
+          createdAt: DateTime.now(),
+        ),
+      ],
+    );
+
+    final updated = [
+      conversation,
+      ...conversations,
+    ];
+
+    state = AsyncData(updated);
+    await _save(updated);
+
+    return conversation.id;
+  }
+
   Future<void> addMessage({
     required String conversationId,
     required String text,
