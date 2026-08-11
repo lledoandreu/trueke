@@ -1,29 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'chat_detail_page.dart';
+import 'providers/chat_provider.dart';
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends ConsumerWidget {
   const ChatPage({super.key});
 
-  static const conversations = [
-    _Conversation(
-      name: 'Carlos',
-      product: 'iPhone 14 Pro',
-      message: 'Hola, ¿te interesa el MacBook Air M2?',
-      time: '10:42',
-      unread: true,
-    ),
-    _Conversation(
-      name: 'Laura',
-      product: 'Cámara Sony Alpha',
-      message: 'Podemos hablar del intercambio.',
-      time: 'Ayer',
-      unread: false,
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final conversationsAsync = ref.watch(chatProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -31,71 +18,69 @@ class ChatPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: conversations.length,
-        separatorBuilder: (_, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final conversation = conversations[index];
+      body: conversationsAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Text('Error cargando chats: $error'),
+        ),
+        data: (conversations) {
+          if (conversations.isEmpty) {
+            return const Center(
+              child: Text('No tienes conversaciones todavía.'),
+            );
+          }
 
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            leading: CircleAvatar(
-              radius: 26,
-              child: Text(
-                conversation.name.substring(0, 1),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: conversations.length,
+            separatorBuilder: (_, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final conversation = conversations[index];
+              final messages = conversation.messages;
+              final lastMessage = messages.isEmpty
+                  ? null
+                  : messages.last;
+
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ),
-            ),
-            title: Row(
-              children: [
-                Expanded(
+                leading: CircleAvatar(
+                  radius: 26,
                   child: Text(
-                    conversation.name,
-                    style: TextStyle(
-                      fontWeight: conversation.unread
-                          ? FontWeight.bold
-                          : FontWeight.w600,
+                    conversation.name.substring(0, 1),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                Text(
-                  conversation.time,
+                title: Text(
+                  conversation.name,
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '${conversation.product}\n${conversation.message}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            trailing: conversation.unread
-                ? const CircleAvatar(
-                    radius: 5,
-                    child: SizedBox(),
-                  )
-                : null,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChatDetailPage(
-                    name: conversation.name,
-                    product: conversation.product,
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    lastMessage?.text ?? conversation.product,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatDetailPage(
+                        conversationId: conversation.id,
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -103,20 +88,4 @@ class ChatPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Conversation {
-  const _Conversation({
-    required this.name,
-    required this.product,
-    required this.message,
-    required this.time,
-    required this.unread,
-  });
-
-  final String name;
-  final String product;
-  final String message;
-  final String time;
-  final bool unread;
 }

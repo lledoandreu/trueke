@@ -1,32 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatDetailPage extends StatefulWidget {
+import 'providers/chat_provider.dart';
+
+class ChatDetailPage extends ConsumerStatefulWidget {
   const ChatDetailPage({
     super.key,
-    required this.name,
-    required this.product,
+    required this.conversationId,
   });
 
-  final String name;
-  final String product;
+  final String conversationId;
 
   @override
-  State<ChatDetailPage> createState() => _ChatDetailPageState();
+  ConsumerState<ChatDetailPage> createState() => _ChatDetailPageState();
 }
 
-class _ChatDetailPageState extends State<ChatDetailPage> {
+class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   final _messageController = TextEditingController();
-
-  final List<_Message> _messages = [
-    const _Message(
-      text: 'Hola, ¿te interesa mi artículo?',
-      isMine: false,
-    ),
-    const _Message(
-      text: 'Sí, me interesa. ¿Te gustaría hacer un intercambio?',
-      isMine: true,
-    ),
-  ];
 
   @override
   void dispose() {
@@ -34,38 +24,50 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
 
     if (text.isEmpty) {
       return;
     }
 
-    setState(() {
-      _messages.add(
-        _Message(
+    await ref.read(chatProvider.notifier).addMessage(
+          conversationId: widget.conversationId,
           text: text,
-          isMine: true,
-        ),
-      );
-    });
+        );
 
     _messageController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final conversations = ref.watch(chatProvider).valueOrNull ?? [];
+
+    final conversation = conversations
+        .where((item) => item.id == widget.conversationId)
+        .firstOrNull;
+
+    if (conversation == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Conversación no encontrada.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              conversation.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             Text(
-              widget.product,
+              conversation.product,
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.grey,
@@ -79,16 +81,18 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
+              itemCount: conversation.messages.length,
               itemBuilder: (context, index) {
-                final message = _messages[index];
+                final message = conversation.messages[index];
 
                 return Align(
                   alignment: message.isMine
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 320),
+                    constraints: const BoxConstraints(
+                      maxWidth: 320,
+                    ),
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -103,7 +107,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     child: Text(
                       message.text,
                       style: TextStyle(
-                        color: message.isMine ? Colors.white : Colors.black87,
+                        color: message.isMine
+                            ? Colors.white
+                            : Colors.black87,
                       ),
                     ),
                   ),
@@ -113,7 +119,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              padding: const EdgeInsets.fromLTRB(
+                12,
+                8,
+                12,
+                12,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -146,14 +157,4 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       ),
     );
   }
-}
-
-class _Message {
-  const _Message({
-    required this.text,
-    required this.isMine,
-  });
-
-  final String text;
-  final bool isMine;
 }
