@@ -14,8 +14,6 @@ class LocalProductRepository implements ProductRepository {
 
   @override
   Future<List<Product>> getProducts() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
     final preferences = await SharedPreferences.getInstance();
     final savedProducts = preferences.getString(_productsKey);
     if (savedProducts == null) {
