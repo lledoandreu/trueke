@@ -1,0 +1,159 @@
+import 'package:flutter/material.dart';
+
+class ChatDetailPage extends StatefulWidget {
+  const ChatDetailPage({
+    super.key,
+    required this.name,
+    required this.product,
+  });
+
+  final String name;
+  final String product;
+
+  @override
+  State<ChatDetailPage> createState() => _ChatDetailPageState();
+}
+
+class _ChatDetailPageState extends State<ChatDetailPage> {
+  final _messageController = TextEditingController();
+
+  final List<_Message> _messages = [
+    const _Message(
+      text: 'Hola, ¿te interesa mi artículo?',
+      isMine: false,
+    ),
+    const _Message(
+      text: 'Sí, me interesa. ¿Te gustaría hacer un intercambio?',
+      isMine: true,
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+
+    if (text.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _messages.add(
+        _Message(
+          text: text,
+          isMine: true,
+        ),
+      );
+    });
+
+    _messageController.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              widget.product,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+
+                return Align(
+                  alignment: message.isMine
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: message.isMine
+                          ? Theme.of(context).colorScheme.primary
+                          : const Color(0xFFF0F1F3),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      message.text,
+                      style: TextStyle(
+                        color: message.isMine ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _sendMessage(),
+                      decoration: InputDecoration(
+                        hintText: 'Escribe un mensaje...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Message {
+  const _Message({
+    required this.text,
+    required this.isMine,
+  });
+
+  final String text;
+  final bool isMine;
+}
