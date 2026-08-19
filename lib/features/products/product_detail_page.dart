@@ -33,7 +33,13 @@ class ProductDetailPage extends ConsumerWidget {
     return SizedBox(
       height: 420,
       width: double.infinity,
-      child: Image.asset(product.imageUrl, fit: BoxFit.cover),
+      child: Image.network(
+        product.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.image_not_supported);
+        },
+      ),
     );
   }
 

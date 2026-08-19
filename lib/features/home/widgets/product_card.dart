@@ -59,7 +59,13 @@ class ProductCard extends ConsumerWidget {
                 children: [
                   Positioned.fill(
                     child: product.imageUrl.isNotEmpty
-                        ? Image.asset(product.imageUrl, fit: BoxFit.cover)
+                        ? Image.network(
+                            product.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.image_not_supported);
+                            },
+                          )
                         : Container(
                             color: const Color(0xFFE5E7EB),
                             child: const Center(

@@ -2,27 +2,16 @@ enum TradeType { trade, sale, tradeAndMoney }
 
 class Product {
   final String id;
-
   final String title;
-
   final List<String> images;
-
   final double? price;
-
   final TradeType tradeType;
-
   final String category;
-
   final String location;
-
   final String owner;
-
   final String condition;
-
   final String description;
-
   final String wanted;
-
   final DateTime createdAt;
 
   const Product({
@@ -51,30 +40,30 @@ class Product {
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
-    'images': images,
+    'description': description,
     'price': price,
-    'tradeType': tradeType.name,
+    'images': images,
+    'trade_type': tradeType.name,
     'category': category,
     'location': location,
     'owner': owner,
     'condition': condition,
-    'description': description,
     'wanted': wanted,
-    'createdAt': createdAt.toIso8601String(),
+    'created_at': createdAt.toIso8601String(),
   };
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
     id: json['id'] as String,
     title: json['title'] as String,
-    images: List<String>.from(json['images'] as List<dynamic>),
+    description: json['description'] as String,
+    images: List<String>.from(json['images'] ?? []),
     price: (json['price'] as num?)?.toDouble(),
-    tradeType: TradeType.values.byName(json['tradeType'] as String),
+    tradeType: TradeType.values.byName(json['trade_type'] as String),
     category: json['category'] as String,
     location: json['location'] as String,
     owner: json['owner'] as String,
     condition: json['condition'] as String,
-    description: json['description'] as String,
     wanted: json['wanted'] as String,
-    createdAt: DateTime.parse(json['createdAt'] as String),
+    createdAt: DateTime.parse(json['created_at'] as String),
   );
 }

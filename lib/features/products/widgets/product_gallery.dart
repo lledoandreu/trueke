@@ -21,7 +21,13 @@ class ProductGallery extends StatelessWidget {
       );
     }
 
-    return Image.asset(product.images.first, fit: BoxFit.cover);
+    return Image.network(
+      product.images.first,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return const Icon(Icons.image_not_supported);
+      },
+    );
   }
 
   @override
