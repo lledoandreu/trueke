@@ -66,4 +66,10 @@ class LocalProductRepository implements ProductRepository {
       jsonEncode(products.map((product) => product.toJson()).toList()),
     );
   }
+
+  @override
+  Future<String> uploadProductImage(String filePath) async {
+    throw UnimplementedError('Local repository does not support image upload');
+  }
+
 }

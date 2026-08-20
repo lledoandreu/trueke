@@ -10,4 +10,6 @@ abstract class ProductRepository {
   Future<void> updateProduct(Product product);
 
   Future<void> deleteProduct(String id);
+
+  Future<String> uploadProductImage(String filePath);
 }

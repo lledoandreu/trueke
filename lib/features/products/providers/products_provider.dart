@@ -34,6 +34,13 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
     state = AsyncData(await repository.getProducts());
   }
+
+  Future<String> uploadProductImage(String filePath) async {
+    final repository = ref.read(productRepositoryProvider);
+
+    return repository.uploadProductImage(filePath);
+  }
+
 }
 
 final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/product.dart';
@@ -49,4 +51,21 @@ class SupabaseProductRepository implements ProductRepository {
   Future<void> deleteProduct(String id) async {
     await _client.from(_table).delete().eq('id', id);
   }
+
+  @override
+  Future<String> uploadProductImage(String filePath) async {
+    final file = File(filePath);
+
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}';
+
+    await _client.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+    return _client.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+  }
+
 }
