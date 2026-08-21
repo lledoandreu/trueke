@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../data/sample_products.dart';
 import '../../../models/product.dart';
@@ -68,7 +69,7 @@ class LocalProductRepository implements ProductRepository {
   }
 
   @override
-  Future<String> uploadProductImage(String filePath) async {
+  Future<String> uploadProductImage(XFile file) async {
     throw UnimplementedError('Local repository does not support image upload');
   }
 

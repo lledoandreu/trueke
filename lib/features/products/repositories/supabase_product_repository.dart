@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -53,19 +54,19 @@ class SupabaseProductRepository implements ProductRepository {
   }
 
   @override
-  Future<String> uploadProductImage(String filePath) async {
-    final file = File(filePath);
+Future<String> uploadProductImage(XFile file) async {
+  final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
 
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.uri.pathSegments.last}';
+  await Supabase.instance.client.storage
+      .from('product-images')
+      .upload(
+        fileName,
+        File(file.path),
+      );
 
-    await _client.storage
-        .from('product-images')
-        .upload(fileName, file);
-
-    return _client.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
-  }
+  return Supabase.instance.client.storage
+      .from('product-images')
+      .getPublicUrl(fileName);
+}
 
 }

@@ -57,10 +57,18 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   }
 
   Future<void> _pickImages() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Abriendo selector de imágenes...')),
+    );
+
     final picker = ImagePicker();
 
     final images = await picker.pickMultiImage(
       imageQuality: 80,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Imágenes seleccionadas: ${images.length}')),
     );
 
     if (images.isNotEmpty) {
@@ -88,12 +96,25 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     setState(() => _isSaving = true);
 
     final existingProduct = widget.product;
+
+    final uploadedImages = <String>[];
+
+    for (final image in _selectedImages) {
+      final url = await ref
+          .read(productsProvider.notifier)
+          .uploadProductImage(image);
+
+      uploadedImages.add(url);
+    }
+
     final product = Product(
       id:
           existingProduct?.id ??
           DateTime.now().microsecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
-      images: existingProduct?.images ?? const [],
+      images: uploadedImages.isNotEmpty
+        ? uploadedImages
+        : existingProduct?.images ?? const [],
       price: _tradeType == TradeType.trade ? null : price,
       tradeType: _tradeType,
       category: _category,

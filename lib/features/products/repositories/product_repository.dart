@@ -1,5 +1,7 @@
 import '../../../models/product.dart';
 
+import 'package:image_picker/image_picker.dart';
+
 abstract class ProductRepository {
   Future<List<Product>> getProducts();
 
@@ -11,5 +13,5 @@ abstract class ProductRepository {
 
   Future<void> deleteProduct(String id);
 
-  Future<String> uploadProductImage(String filePath);
+  Future<String> uploadProductImage(XFile file);
 }

@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Trueke necesita acceder a tus fotos para añadir imágenes a tus artículos.</string>
+
 </dict>
 </plist>

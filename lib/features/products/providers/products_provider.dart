@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/providers/providers.dart';
 import '../../../models/product.dart';
@@ -35,14 +37,20 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
     state = AsyncData(await repository.getProducts());
   }
 
-  Future<String> uploadProductImage(String filePath) async {
+  Future<String> uploadProductImage(XFile file) async {
+    debugPrint('SUBIDA IMAGEN INICIO: ${file.name}');
+
     final repository = ref.read(productRepositoryProvider);
 
-    return repository.uploadProductImage(filePath);
-  }
+    final url = await repository.uploadProductImage(file);
 
+    debugPrint('SUBIDA IMAGEN OK: $url');
+
+    return url;
+  }
 }
 
-final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
+final productsProvider =
+    AsyncNotifierProvider<ProductsNotifier, List<Product>>(
   ProductsNotifier.new,
 );
