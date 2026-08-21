@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/product.dart';
 import 'providers/products_provider.dart';
@@ -25,6 +26,7 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   String _condition = 'Buen estado';
   TradeType _tradeType = TradeType.trade;
   bool _isSaving = false;
+  final List<XFile> _selectedImages = [];
 
   @override
   void initState() {
@@ -52,6 +54,22 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     _locationController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+
+    final images = await picker.pickMultiImage(
+      imageQuality: 80,
+    );
+
+    if (images.isNotEmpty) {
+      setState(() {
+        _selectedImages
+          ..clear()
+          ..addAll(images);
+      });
+    }
   }
 
   Future<void> _publish() async {
@@ -142,8 +160,14 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Las fotos estarán disponibles al conectar el almacenamiento en la siguiente fase.',
-              ),
+  'Añade fotos de tu artículo.',
+),
+const SizedBox(height: 16),
+OutlinedButton.icon(
+  onPressed: _pickImages,
+  icon: const Icon(Icons.photo_library_outlined),
+  label: const Text('Añadir fotos'),
+),
               const SizedBox(height: 24),
               _field(
                 controller: _titleController,
