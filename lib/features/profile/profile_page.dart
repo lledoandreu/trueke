@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/favorites_provider.dart';
+import '../auth/auth_service.dart';
 import '../products/providers/products_provider.dart';
 import 'my_listings_page.dart';
 import '../trades/providers/trade_offers_provider.dart';
@@ -12,12 +13,13 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = AuthService.currentUser;
     final productsAsync = ref.watch(productsProvider);
     final favoritesAsync = ref.watch(favoritesProvider);
     final offersAsync = ref.watch(tradeOffersProvider);
     final listingCount =
         productsAsync.valueOrNull
-            ?.where((product) => product.owner == 'Tú')
+            ?.where((product) => product.ownerId == user?.id)
             .length ??
         0;
     final favoriteCount = favoritesAsync.valueOrNull?.length ?? 0;
@@ -34,16 +36,14 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Text(
-              'Tu perfil',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              user?.email ?? 'Tu perfil',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 4),
-          const Center(
-            child: Text('Inicia sesión cuando conectemos el backend'),
-          ),
+          const Center(child: Text('Sesión iniciada')),
           const SizedBox(height: 28),
           Row(
             children: [
@@ -83,11 +83,26 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.shield_outlined),
-              title: Text('Cuenta y privacidad'),
-              subtitle: Text('Disponible al activar el inicio de sesión'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Cerrar sesión'),
+              subtitle: const Text('Volverás a la pantalla de acceso'),
+              onTap: () async {
+                try {
+                  await AuthService.signOut();
+                } on Exception catch (_) {
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No se ha podido cerrar la sesión.'),
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/product.dart';
+import '../auth/auth_service.dart';
 import '../products/publish_product_page.dart';
 import '../products/providers/products_provider.dart';
 
@@ -11,6 +12,7 @@ class MyListingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(productsProvider);
+    final currentUserId = AuthService.currentUserId;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis anuncios')),
@@ -20,7 +22,7 @@ class MyListingsPage extends ConsumerWidget {
             Center(child: Text('Error cargando anuncios: $error')),
         data: (products) {
           final listings = products
-              .where((product) => product.owner == 'Tú')
+              .where((product) => product.ownerId == currentUserId)
               .toList();
 
           if (listings.isEmpty) {

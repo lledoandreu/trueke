@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../auth/auth_service.dart';
 import '../../models/product.dart';
 import 'providers/products_provider.dart';
 
@@ -57,15 +58,21 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   }
 
   Future<void> _pickImages() async {
+    final picker = ImagePicker();
+
+    if (!mounted) {
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Abriendo selector de imágenes...')),
     );
 
-    final picker = ImagePicker();
+    final images = await picker.pickMultiImage(imageQuality: 80);
 
-    final images = await picker.pickMultiImage(
-      imageQuality: 80,
-    );
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Imágenes seleccionadas: ${images.length}')),
@@ -96,6 +103,17 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     setState(() => _isSaving = true);
 
     final existingProduct = widget.product;
+    final currentUserId = AuthService.currentUserId;
+
+    if (currentUserId == null) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Inicia sesión para publicar un artículo.'),
+        ),
+      );
+      return;
+    }
 
     final uploadedImages = <String>[];
 
@@ -113,13 +131,14 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
           DateTime.now().microsecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
       images: uploadedImages.isNotEmpty
-        ? uploadedImages
-        : existingProduct?.images ?? const [],
+          ? uploadedImages
+          : existingProduct?.images ?? const [],
       price: _tradeType == TradeType.trade ? null : price,
       tradeType: _tradeType,
       category: _category,
       location: _locationController.text.trim(),
-      owner: existingProduct?.owner ?? 'Tú',
+      owner: existingProduct?.owner ?? AuthService.currentUserLabel,
+      ownerId: existingProduct?.ownerId ?? currentUserId,
       condition: _condition,
       description: _descriptionController.text.trim(),
       wanted: _wantedController.text.trim(),
@@ -180,15 +199,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-  'Añade fotos de tu artículo.',
-),
-const SizedBox(height: 16),
-OutlinedButton.icon(
-  onPressed: _pickImages,
-  icon: const Icon(Icons.photo_library_outlined),
-  label: const Text('Añadir fotos'),
-),
+              const Text('Añade fotos de tu artículo.'),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _pickImages,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Añadir fotos'),
+              ),
               const SizedBox(height: 24),
               _field(
                 controller: _titleController,
