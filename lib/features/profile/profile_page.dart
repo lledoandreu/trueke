@@ -6,6 +6,7 @@ import '../auth/auth_service.dart';
 import '../products/providers/products_provider.dart';
 import '../trades/providers/trade_offers_provider.dart';
 import '../trades/trade_offers_page.dart';
+import 'edit_profile_page.dart';
 import 'my_listings_page.dart';
 import 'providers/profile_provider.dart';
 
@@ -42,20 +43,8 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 12),
 
           profileAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            error: (_, __) => Column(
-              children: [
-                Text(
-                  user?.email ?? 'Tu perfil',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            loading: () => const CircularProgressIndicator(),
+            error: (_, __) => Text(user?.email ?? 'Tu perfil'),
             data: (profile) {
               final name =
                   profile?.displayName ??
@@ -73,22 +62,26 @@ class ProfilePage extends ConsumerWidget {
                     ),
                   ),
                   if (profile?.username != null)
-                    Text(
-                      '@${profile!.username}',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                      ),
+                    Text('@${profile!.username}'),
+                  if (profile != null)
+                    TextButton.icon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Editar perfil'),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                EditProfilePage(profile: profile),
+                          ),
+                        );
+                      },
                     ),
                 ],
               );
             },
           ),
 
-          const SizedBox(height: 4),
-          const Center(
-            child: Text('Sesión iniciada'),
-          ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
 
           Row(
             children: [
@@ -117,7 +110,6 @@ class ProfilePage extends ConsumerWidget {
               subtitle: const Text(
                 'Consulta, edita o elimina artículos publicados',
               ),
-              trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MyListingsPage(),
@@ -135,7 +127,6 @@ class ProfilePage extends ConsumerWidget {
               subtitle: Text(
                 '${offersAsync.valueOrNull?.length ?? 0} enviadas',
               ),
-              trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const TradeOffersPage(),
@@ -154,21 +145,7 @@ class ProfilePage extends ConsumerWidget {
                 'Volverás a la pantalla de acceso',
               ),
               onTap: () async {
-                try {
-                  await AuthService.signOut();
-                } on Exception catch (_) {
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'No se ha podido cerrar la sesión.',
-                      ),
-                    ),
-                  );
-                }
+                await AuthService.signOut();
               },
             ),
           ),
