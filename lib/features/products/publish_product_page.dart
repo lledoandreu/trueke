@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -130,9 +132,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
           existingProduct?.id ??
           DateTime.now().microsecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
-      images: uploadedImages.isNotEmpty
-          ? uploadedImages
-          : existingProduct?.images ?? const [],
+      images: [
+        ...?existingProduct?.images,
+        ...uploadedImages,
+      ],
       price: _tradeType == TradeType.trade ? null : price,
       tradeType: _tradeType,
       category: _category,
@@ -202,11 +205,63 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
               const Text('Añade fotos de tu artículo.'),
               const SizedBox(height: 16),
               OutlinedButton.icon(
-                onPressed: _pickImages,
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Añadir fotos'),
+              onPressed: _pickImages,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Añadir fotos'),
+            ),
+            if (_selectedImages.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 110,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final image = _selectedImages[index];
+
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            File(image.path),
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Material(
+                            color: Colors.black54,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                setState(() {
+                                  _selectedImages.removeAt(index);
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 24),
+            ],
+            const SizedBox(height: 24),
               _field(
                 controller: _titleController,
                 label: 'Título',

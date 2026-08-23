@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/product.dart';
+import '../../app/routes/app_routes.dart';
 import '../auth/auth_service.dart';
 import '../products/publish_product_page.dart';
 import '../products/providers/products_provider.dart';
@@ -102,6 +103,12 @@ class _ListingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
+        onTap: () {
+          Navigator.of(context).pushNamed(
+            AppRoutes.product,
+            arguments: product,
+          );
+        },
         leading: CircleAvatar(
           backgroundColor: const Color(0xFFF2F3F5),
           child: Icon(_categoryIcon(product.category)),
