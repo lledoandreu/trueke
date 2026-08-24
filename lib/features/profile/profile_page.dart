@@ -34,10 +34,25 @@ class ProfilePage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Center(
-            child: CircleAvatar(
-              radius: 42,
-              child: Icon(Icons.person, size: 44),
+          Center(
+            child: profileAsync.when(
+              loading: () => const CircleAvatar(
+                radius: 42,
+                child: CircularProgressIndicator(),
+              ),
+              error: (_, _) => const CircleAvatar(
+                radius: 42,
+                child: Icon(Icons.person, size: 44),
+              ),
+              data: (profile) => CircleAvatar(
+                radius: 42,
+                backgroundImage: profile?.avatarUrl != null
+                    ? NetworkImage(profile!.avatarUrl!)
+                    : null,
+                child: profile?.avatarUrl == null
+                    ? const Icon(Icons.person, size: 44)
+                    : null,
+              ),
             ),
           ),
           const SizedBox(height: 12),
