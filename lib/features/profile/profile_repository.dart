@@ -9,29 +9,23 @@ class ProfileRepository {
 
   Future<Profile?> getMyProfile(String userId) async {
     try {
-    print('GET PROFILE START: $userId');
+      print('GET PROFILE START: $userId');
 
-    final test = await _client.from('profiles').select('id').limit(1);
-    print('TEST QUERY: $test');
+      final response = await _client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
 
-    final response = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle()
-        .timeout(const Duration(seconds: 5));
+      print('PROFILE QUERY OK');
+      print('GET PROFILE RESPONSE: $response');
 
-    print('PROFILE QUERY OK');
+      if (response == null) {
+        return null;
+      }
 
-    print('GET PROFILE RESPONSE: $response');
-
-    print('PROFILE RESPONSE: $response');
-
-    if (response == null) {
-      return null;
-    }
-
-    return Profile.fromMap(response);
+      return Profile.fromMap(response);
     } catch (e, st) {
       print('PROFILE ERROR: $e');
       print(st);
@@ -40,13 +34,28 @@ class ProfileRepository {
   }
 
   Future<void> createProfile(Profile profile) async {
-    await _client.from('profiles').insert(profile.toMap());
+    await _client
+        .from('profiles')
+        .insert(profile.toMap());
   }
 
   Future<void> updateProfile(Profile profile) async {
-    await _client
-        .from('profiles')
-        .update(profile.toMap())
-        .eq('id', profile.id);
+    try {
+      print('UPDATE PROFILE START: ${profile.id}');
+      print('UPDATE DATA: ${profile.toMap()}');
+
+      final response = await _client
+          .from('profiles')
+          .update(profile.toMap())
+          .eq('id', profile.id)
+          .select()
+          .single();
+
+      print('UPDATE PROFILE OK: $response');
+    } catch (e, st) {
+      print('UPDATE PROFILE ERROR: $e');
+      print(st);
+      rethrow;
+    }
   }
 }
