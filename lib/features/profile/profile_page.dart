@@ -17,6 +17,7 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = AuthService.currentUser;
     final profileAsync = ref.watch(profileProvider);
+    print('PROFILE PAGE USER: ${user?.id}');
     final productsAsync = ref.watch(productsProvider);
     final favoritesAsync = ref.watch(favoritesProvider);
     final offersAsync = ref.watch(tradeOffersProvider);

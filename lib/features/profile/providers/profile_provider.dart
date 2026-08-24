@@ -16,7 +16,11 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
     return null;
   }
 
-  return ref
+  final profile = await ref
       .read(profileRepositoryProvider)
       .getMyProfile(userId);
+
+  print('PROFILE PROVIDER RESULT: $profile');
+
+  return profile;
 });

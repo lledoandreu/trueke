@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../profile/profile_repository.dart';
+import '../../models/profile.dart';
+
 class AuthService {
   AuthService._();
 
@@ -15,11 +18,37 @@ class AuthService {
   static Stream<AuthState> get authStateChanges =>
       _client.auth.onAuthStateChange;
 
+  static Future<void> _ensureProfile() async {
+    final user = currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    final repository = ProfileRepository(_client);
+    final profile = await repository.getMyProfile(user.id);
+
+    if (profile == null) {
+      await repository.createProfile(
+        Profile(
+          id: user.id,
+          username: user.email?.split('@').first,
+          displayName: user.email?.split('@').first,
+        ),
+      );
+    }
+  }
+
   static Future<void> signIn({
     required String email,
     required String password,
   }) async {
-    await _client.auth.signInWithPassword(email: email, password: password);
+    await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+
+    await _ensureProfile();
   }
 
   static Future<bool> signUp({
@@ -30,6 +59,10 @@ class AuthService {
       email: email,
       password: password,
     );
+
+    if (response.session != null) {
+      await _ensureProfile();
+    }
 
     return response.session != null;
   }
