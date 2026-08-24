@@ -17,7 +17,6 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = AuthService.currentUser;
     final profileAsync = ref.watch(profileProvider);
-    print('PROFILE PAGE USER: ${user?.id}');
     final productsAsync = ref.watch(productsProvider);
     final favoritesAsync = ref.watch(favoritesProvider);
     final offersAsync = ref.watch(tradeOffersProvider);
@@ -45,7 +44,7 @@ class ProfilePage extends ConsumerWidget {
 
           profileAsync.when(
             loading: () => const CircularProgressIndicator(),
-            error: (_, __) => Text(user?.email ?? 'Tu perfil'),
+            error: (_, _) => Text(user?.email ?? 'Tu perfil'),
             data: (profile) {
               final name =
                   profile?.displayName ??

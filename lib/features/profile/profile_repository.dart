@@ -9,8 +9,6 @@ class ProfileRepository {
 
   Future<Profile?> getMyProfile(String userId) async {
     try {
-      print('GET PROFILE START: $userId');
-
       final response = await _client
           .from('profiles')
           .select()
@@ -18,17 +16,12 @@ class ProfileRepository {
           .maybeSingle()
           .timeout(const Duration(seconds: 5));
 
-      print('PROFILE QUERY OK');
-      print('GET PROFILE RESPONSE: $response');
-
       if (response == null) {
         return null;
       }
 
       return Profile.fromMap(response);
-    } catch (e, st) {
-      print('PROFILE ERROR: $e');
-      print(st);
+    } catch (e) {
       rethrow;
     }
   }
@@ -41,20 +34,13 @@ class ProfileRepository {
 
   Future<void> updateProfile(Profile profile) async {
     try {
-      print('UPDATE PROFILE START: ${profile.id}');
-      print('UPDATE DATA: ${profile.toMap()}');
-
-      final response = await _client
+      await _client
           .from('profiles')
           .update(profile.toMap())
           .eq('id', profile.id)
           .select()
           .single();
-
-      print('UPDATE PROFILE OK: $response');
-    } catch (e, st) {
-      print('UPDATE PROFILE ERROR: $e');
-      print(st);
+    } catch (e) {
       rethrow;
     }
   }
