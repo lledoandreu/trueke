@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
-import 'providers/profile_provider.dart';
+import '../../core/supabase/storage_service.dart';
 import '../../models/profile.dart';
+import '../auth/auth_service.dart';
+import 'providers/profile_provider.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({
@@ -22,6 +27,7 @@ class _EditProfilePageState
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
 
+  File? _avatarFile;
   bool _loading = false;
 
   @override
@@ -44,15 +50,45 @@ class _EditProfilePageState
     super.dispose();
   }
 
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (image == null) {
+      return;
+    }
+
+    setState(() {
+      _avatarFile = File(image.path);
+    });
+  }
+
   Future<void> _save() async {
     setState(() {
       _loading = true;
     });
 
     try {
+      String? avatarUrl = widget.profile.avatarUrl;
+
+      if (_avatarFile != null) {
+        final storage = StorageService(
+          AuthService.supabase,
+        );
+
+        avatarUrl = await storage.uploadAvatar(
+          file: _avatarFile!,
+          userId: widget.profile.id,
+        );
+      }
+
       final updated = widget.profile.copyWith(
         displayName: _nameController.text.trim(),
         username: _usernameController.text.trim(),
+        avatarUrl: avatarUrl,
       );
 
       await ref
@@ -90,32 +126,51 @@ class _EditProfilePageState
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          GestureDetector(
+            onTap: _pickAvatar,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundImage: _avatarFile != null
+                  ? FileImage(_avatarFile!)
+                  : widget.profile.avatarUrl != null
+                      ? NetworkImage(
+                          widget.profile.avatarUrl!,
+                        )
+                      : null,
+              child: _avatarFile == null &&
+                      widget.profile.avatarUrl == null
+                  ? const Icon(
+                      Icons.camera_alt,
+                      size: 32,
+                    )
+                  : null,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(
               labelText: 'Nombre visible',
-              prefixIcon: Icon(Icons.person_outline),
             ),
           ),
+
           const SizedBox(height: 16),
+
           TextField(
             controller: _usernameController,
             decoration: const InputDecoration(
               labelText: 'Usuario',
-              prefixIcon: Icon(Icons.alternate_email),
             ),
           ),
+
           const SizedBox(height: 24),
+
           FilledButton(
             onPressed: _loading ? null : _save,
             child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
+                ? const CircularProgressIndicator()
                 : const Text('Guardar cambios'),
           ),
         ],

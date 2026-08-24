@@ -8,6 +8,8 @@ class AuthService {
 
   static final SupabaseClient _client = Supabase.instance.client;
 
+  static SupabaseClient get supabase => _client;
+
   static User? get currentUser => _client.auth.currentUser;
 
   static String? get currentUserId => currentUser?.id;
