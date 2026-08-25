@@ -139,9 +139,9 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         }
       }
 
-      final existingImages = existingProduct?.images ?? [];
+      final existingImages = existingProduct?.images ?? <String>[];
 
-      final allImages = [...existingImages, ...uploadedImages].toSet().toList();
+      final allImages = {...existingImages, ...uploadedImages}.toList();
 
       final product = Product(
         id:
