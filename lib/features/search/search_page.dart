@@ -20,7 +20,8 @@ class SearchPage extends ConsumerWidget {
         actions: [
           if (filters.hasActiveFilters)
             TextButton(
-              onPressed: ref.read(productFiltersProvider.notifier).clear,
+              onPressed: () =>
+                  ref.read(productFiltersProvider.notifier).clear(),
               child: const Text('Limpiar'),
             ),
         ],
@@ -31,33 +32,51 @@ class SearchPage extends ConsumerWidget {
           _FilterChips(filters: filters),
           Expanded(
             child: productsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) =>
-                  Center(child: Text('Error cargando productos: $error')),
-              data: (products) => products.isEmpty
-                  ? const Center(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'No se han podido cargar los productos.\n$error',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              data: (products) {
+                if (products.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
                       child: Text(
                         'No hemos encontrado artículos con esos filtros.',
+                        textAlign: TextAlign.center,
                       ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final columns = constraints.maxWidth >= 700 ? 3 : 2;
-                        return GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: products.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: 0.62,
-                              ),
-                          itemBuilder: (context, index) =>
-                              ProductCard(product: products[index]),
-                        );
-                      },
                     ),
+                  );
+                }
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth >= 900 ? 4 : 2;
+
+                    return GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      itemCount: products.length,
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.62,
+                      ),
+                      itemBuilder: (context, index) {
+                        return ProductCard(product: products[index]);
+                      },
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -73,16 +92,17 @@ class _FilterChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(productFiltersProvider.notifier);
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
           FilterChip(
-            label: const Text('Todas las categorías'),
+            label: const Text('Todas'),
             selected: filters.category == null,
-            onSelected: (_) =>
-                ref.read(productFiltersProvider.notifier).clearCategory(),
+            onSelected: (_) => notifier.clearCategory(),
           ),
           const SizedBox(width: 8),
           for (final category in const [
@@ -95,9 +115,7 @@ class _FilterChips extends ConsumerWidget {
             FilterChip(
               label: Text(category),
               selected: filters.category == category,
-              onSelected: (_) => ref
-                  .read(productFiltersProvider.notifier)
-                  .toggleCategory(category),
+              onSelected: (_) => notifier.toggleCategory(category),
             ),
             const SizedBox(width: 8),
           ],
@@ -105,9 +123,8 @@ class _FilterChips extends ConsumerWidget {
             FilterChip(
               label: Text(_tradeTypeLabel(option)),
               selected: filters.tradeType == option,
-              onSelected: (selected) => ref
-                  .read(productFiltersProvider.notifier)
-                  .setTradeType(selected ? option : null),
+              onSelected: (selected) =>
+                  notifier.setTradeType(selected ? option : null),
             ),
             const SizedBox(width: 8),
           ],
