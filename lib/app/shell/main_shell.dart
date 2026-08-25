@@ -4,6 +4,7 @@ import '../../features/chat/chat_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/products/publish_product_page.dart';
 import '../../features/profile/profile_page.dart';
+import '../../features/search/search_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -17,7 +18,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> pages = const [
     HomePage(),
-    Center(child: Text('Buscar')),
+    SearchPage(),
     PublishProductPage(),
     ChatPage(),
     ProfilePage(),
@@ -40,10 +41,7 @@ class _MainShellState extends State<MainShell> {
             selectedIcon: Icon(Icons.home),
             label: 'Inicio',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.search),
-            label: 'Buscar',
-          ),
+          NavigationDestination(icon: Icon(Icons.search), label: 'Buscar'),
           NavigationDestination(
             icon: Icon(Icons.add_circle_outline),
             selectedIcon: Icon(Icons.add_circle),
