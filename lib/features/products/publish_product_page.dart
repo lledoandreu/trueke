@@ -19,6 +19,7 @@ class PublishProductPage extends ConsumerStatefulWidget {
 
 class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   final _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _wantedController;
@@ -29,12 +30,15 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   String _condition = 'Buen estado';
   TradeType _tradeType = TradeType.trade;
   bool _isSaving = false;
+
   final List<XFile> _selectedImages = [];
 
   @override
   void initState() {
     super.initState();
+
     final product = widget.product;
+
     _titleController = TextEditingController(text: product?.title);
     _descriptionController = TextEditingController(text: product?.description);
     _wantedController = TextEditingController(text: product?.wanted);
@@ -42,6 +46,7 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     _priceController = TextEditingController(
       text: product?.price?.toStringAsFixed(0),
     );
+
     if (product != null) {
       _category = product.category;
       _condition = product.condition;
@@ -76,10 +81,6 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Imágenes seleccionadas: ${images.length}')),
-    );
-
     if (images.isNotEmpty) {
       setState(() {
         _selectedImages
@@ -87,6 +88,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
           ..addAll(images);
       });
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Imágenes seleccionadas: ${images.length}')),
+    );
   }
 
   Future<void> _publish() async {
@@ -94,7 +99,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       return;
     }
 
-    final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
+    final price = double.tryParse(
+      _priceController.text.trim().replaceAll(',', '.'),
+    );
+
     if (_tradeType != TradeType.trade && price == null) {
       ScaffoldMessenger.of(
         context,
@@ -102,13 +110,9 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       return;
     }
 
-    setState(() => _isSaving = true);
-
-    final existingProduct = widget.product;
     final currentUserId = AuthService.currentUserId;
 
     if (currentUserId == null) {
-      setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Inicia sesión para publicar un artículo.'),
@@ -117,68 +121,97 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       return;
     }
 
-    final uploadedImages = <String>[];
-
-    for (final image in _selectedImages) {
-      final url = await ref
-          .read(productsProvider.notifier)
-          .uploadProductImage(image);
-
-      uploadedImages.add(url);
-    }
-
-    final product = Product(
-      id:
-          existingProduct?.id ??
-          DateTime.now().microsecondsSinceEpoch.toString(),
-      title: _titleController.text.trim(),
-      images: [
-        ...?existingProduct?.images,
-        ...uploadedImages,
-      ],
-      price: _tradeType == TradeType.trade ? null : price,
-      tradeType: _tradeType,
-      category: _category,
-      location: _locationController.text.trim(),
-      owner: existingProduct?.owner ?? AuthService.currentUserLabel,
-      ownerId: existingProduct?.ownerId ?? currentUserId,
-      condition: _condition,
-      description: _descriptionController.text.trim(),
-      wanted: _wantedController.text.trim(),
-      createdAt: existingProduct?.createdAt ?? DateTime.now(),
-    );
-
-    if (existingProduct == null) {
-      await ref.read(productsProvider.notifier).addProduct(product);
-    } else {
-      await ref.read(productsProvider.notifier).updateProduct(product);
-    }
-    if (!mounted) {
-      return;
-    }
-
-    setState(() => _isSaving = false);
-    if (existingProduct != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anuncio actualizado correctamente.')),
-      );
-      Navigator.pop(context);
-      return;
-    }
-    _formKey.currentState!.reset();
-    _titleController.clear();
-    _descriptionController.clear();
-    _wantedController.clear();
-    _locationController.clear();
-    _priceController.clear();
     setState(() {
-      _category = 'Electrónica';
-      _condition = 'Buen estado';
-      _tradeType = TradeType.trade;
+      _isSaving = true;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Artículo publicado correctamente.')),
-    );
+
+    try {
+      final existingProduct = widget.product;
+      final uploadedImages = <String>[];
+
+      for (final image in _selectedImages) {
+        final url = await ref
+            .read(productsProvider.notifier)
+            .uploadProductImage(image);
+
+        if (!uploadedImages.contains(url)) {
+          uploadedImages.add(url);
+        }
+      }
+
+      final existingImages = existingProduct?.images ?? [];
+
+      final allImages = [...existingImages, ...uploadedImages].toSet().toList();
+
+      final product = Product(
+        id:
+            existingProduct?.id ??
+            DateTime.now().microsecondsSinceEpoch.toString(),
+        title: _titleController.text.trim(),
+        images: allImages,
+        price: _tradeType == TradeType.trade ? null : price,
+        tradeType: _tradeType,
+        category: _category,
+        location: _locationController.text.trim(),
+        owner: existingProduct?.owner ?? AuthService.currentUserLabel,
+        ownerId: existingProduct?.ownerId ?? currentUserId,
+        condition: _condition,
+        description: _descriptionController.text.trim(),
+        wanted: _wantedController.text.trim(),
+        createdAt: existingProduct?.createdAt ?? DateTime.now(),
+      );
+
+      if (existingProduct == null) {
+        await ref.read(productsProvider.notifier).addProduct(product);
+      } else {
+        await ref.read(productsProvider.notifier).updateProduct(product);
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      if (existingProduct != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Anuncio actualizado correctamente.')),
+        );
+
+        Navigator.pop(context);
+        return;
+      }
+
+      _formKey.currentState!.reset();
+      _titleController.clear();
+      _descriptionController.clear();
+      _wantedController.clear();
+      _locationController.clear();
+      _priceController.clear();
+
+      setState(() {
+        _selectedImages.clear();
+        _category = 'Electrónica';
+        _condition = 'Buen estado';
+        _tradeType = TradeType.trade;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Artículo publicado correctamente.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo guardar el anuncio: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -199,69 +232,72 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                 widget.product == null
                     ? 'Comparte algo que ya no usas'
                     : 'Actualiza la información de tu anuncio',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               const Text('Añade fotos de tu artículo.'),
               const SizedBox(height: 16),
               OutlinedButton.icon(
-              onPressed: _pickImages,
-              icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Añadir fotos'),
-            ),
-            if (_selectedImages.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 110,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final image = _selectedImages[index];
+                onPressed: _pickImages,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Añadir fotos'),
+              ),
+              if (_selectedImages.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _selectedImages.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final image = _selectedImages[index];
 
-                    return Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            File(image.path),
-                            width: 110,
-                            height: 110,
-                            fit: BoxFit.cover,
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(image.path),
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Material(
-                            color: Colors.black54,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () {
-                                setState(() {
-                                  _selectedImages.removeAt(index);
-                                });
-                              },
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 18,
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Material(
+                              color: Colors.black54,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImages.removeAt(index);
+                                  });
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  },
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 24),
+              ],
+              const SizedBox(height: 24),
               _field(
                 controller: _titleController,
                 label: 'Título',
@@ -280,7 +316,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       ),
                     )
                     .toList(),
-                onChanged: (category) => setState(() => _category = category!),
+                onChanged: (category) {
+                  if (category != null) {
+                    setState(() {
+                      _category = category;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<TradeType>(
@@ -295,7 +337,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       ),
                     )
                     .toList(),
-                onChanged: (type) => setState(() => _tradeType = type!),
+                onChanged: (type) {
+                  if (type != null) {
+                    setState(() {
+                      _tradeType = type;
+                    });
+                  }
+                },
               ),
               if (_tradeType != TradeType.trade) ...[
                 const SizedBox(height: 16),
@@ -320,8 +368,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       ),
                     )
                     .toList(),
-                onChanged: (condition) =>
-                    setState(() => _condition = condition!),
+                onChanged: (condition) {
+                  if (condition != null) {
+                    setState(() {
+                      _condition = condition;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 16),
               _field(
@@ -378,9 +431,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       decoration: InputDecoration(labelText: label, hintText: hint),
       maxLines: maxLines,
       keyboardType: keyboardType,
-      validator: (value) => value == null || value.trim().isEmpty
-          ? 'Este campo es obligatorio.'
-          : null,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Este campo es obligatorio.';
+        }
+
+        return null;
+      },
     );
   }
 
@@ -394,4 +451,5 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
 }
 
 const _categories = ['Electrónica', 'Moda', 'Hogar', 'Gaming', 'Deporte'];
+
 const _conditions = ['Nuevo', 'Como nuevo', 'Buen estado', 'Usado'];
