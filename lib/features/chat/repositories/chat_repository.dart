@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/chat_conversation.dart';
+import '../../../models/chat_message.dart';
 import '../../../models/product.dart';
 import '../../auth/auth_service.dart';
 
@@ -71,7 +72,9 @@ class ChatRepository {
         .single();
 
     final conversationId = inserted['id'] as String;
+
     await addMessage(conversationId: conversationId, text: message);
+
     return conversationId;
   }
 
@@ -84,10 +87,48 @@ class ChatRepository {
       throw StateError('Debes iniciar sesión para enviar un mensaje.');
     }
 
+    final cleanText = text.trim();
+    if (cleanText.isEmpty) {
+      return;
+    }
+
     await _client.from(_messages).insert({
       'conversation_id': conversationId,
       'sender_id': userId,
-      'text': text,
+      'text': cleanText,
     });
+  }
+
+  RealtimeChannel subscribeToMessages({
+    required String conversationId,
+    required void Function(ChatMessage message) onMessage,
+  }) {
+    return _client
+        .channel('conversation:$conversationId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: _messages,
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'conversation_id',
+            value: conversationId,
+          ),
+          callback: (payload) {
+            final userId = AuthService.currentUserId;
+
+            final message = ChatMessage.fromJson(
+              payload.newRecord,
+              currentUserId: userId,
+            );
+
+            onMessage(message);
+          },
+        )
+        .subscribe();
+  }
+
+  Future<void> unsubscribe(RealtimeChannel channel) async {
+    await _client.removeChannel(channel);
   }
 }
