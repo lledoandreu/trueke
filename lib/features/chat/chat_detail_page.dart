@@ -66,81 +66,92 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final conversations = ref.watch(chatProvider).valueOrNull ?? [];
+    final conversationsAsync = ref.watch(chatProvider);
 
-    final conversation = conversations
-        .where((item) => item.id == widget.conversationId)
-        .firstOrNull;
-
-    if (conversation == null) {
-      return const Scaffold(
-        body: Center(child: Text('Conversación no encontrada.')),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              conversation.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              conversation.product,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
+    return conversationsAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, _) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('Error cargando el chat: $error')),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: conversation.messages.length,
-              itemBuilder: (context, index) {
-                final message = conversation.messages[index];
+      data: (conversations) {
+        final conversation = conversations
+            .where((item) => item.id == widget.conversationId)
+            .firstOrNull;
 
-                return _MessageBubble(message: message);
-              },
+        if (conversation == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: Text('Conversación no encontrada.')),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  conversation.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  conversation.product,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                      decoration: InputDecoration(
-                        hintText: 'Escribe un mensaje...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: conversation.messages.length,
+                  itemBuilder: (context, index) {
+                    final message = conversation.messages[index];
+
+                    return _MessageBubble(message: message);
+                  },
+                ),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) => _sendMessage(),
+                          decoration: InputDecoration(
+                            hintText: 'Escribe un mensaje...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        onPressed: _sendMessage,
+                        icon: const Icon(Icons.send),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _sendMessage,
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

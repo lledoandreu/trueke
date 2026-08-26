@@ -11,6 +11,8 @@ class TradeOffer {
     this.fromUserId,
     this.toUserId,
     this.conversationId,
+    this.offeredProductId,
+    this.offeredProductTitle,
     this.isIncoming = false,
   });
 
@@ -23,7 +25,28 @@ class TradeOffer {
   final String? fromUserId;
   final String? toUserId;
   final String? conversationId;
+  final String? offeredProductId;
+  final String? offeredProductTitle;
   final bool isIncoming;
+
+  bool get isPending => status == TradeOfferStatus.sent;
+
+  TradeOffer copyWith({TradeOfferStatus? status}) {
+    return TradeOffer(
+      id: id,
+      productId: productId,
+      productTitle: productTitle,
+      message: message,
+      createdAt: createdAt,
+      status: status ?? this.status,
+      fromUserId: fromUserId,
+      toUserId: toUserId,
+      conversationId: conversationId,
+      offeredProductId: offeredProductId,
+      offeredProductTitle: offeredProductTitle,
+      isIncoming: isIncoming,
+    );
+  }
 
   factory TradeOffer.fromJson(
     Map<String, dynamic> json, {
@@ -48,6 +71,12 @@ class TradeOffer {
       conversationId:
           json['conversation_id'] as String? ??
           json['conversationId'] as String?,
+      offeredProductId:
+          json['offered_product_id'] as String? ??
+          json['offeredProductId'] as String?,
+      offeredProductTitle:
+          json['offered_product_title'] as String? ??
+          json['offeredProductTitle'] as String?,
       isIncoming: currentUserId != null && fromUserId != currentUserId,
     );
   }

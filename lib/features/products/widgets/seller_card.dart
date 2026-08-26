@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../models/product.dart';
+import '../../auth/auth_service.dart';
+import '../../trades/send_trade_offer_page.dart';
 
 class SellerCard extends StatelessWidget {
   final Product product;
@@ -43,7 +45,20 @@ class SellerCard extends StatelessWidget {
             subtitle: const Text('Miembro verificado\n⭐ 4.9 · 58 valoraciones'),
             isThreeLine: true,
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () {
+              if (product.ownerId == AuthService.currentUserId) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Este anuncio es tuyo.')),
+                );
+                return;
+              }
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SendTradeOfferPage(product: product),
+                ),
+              );
+            },
           ),
         ),
       ],

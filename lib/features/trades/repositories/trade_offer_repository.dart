@@ -40,6 +40,7 @@ class TradeOfferRepository {
   Future<void> sendOffer({
     required Product product,
     required String message,
+    Product? offeredProduct,
   }) async {
     final userId = AuthService.currentUserId;
     if (userId == null) {
@@ -59,6 +60,46 @@ class TradeOfferRepository {
       'conversation_id': conversationId,
       'message': message,
       'status': TradeOfferStatus.sent.name,
+      'offered_product_id': offeredProduct?.id,
+      'offered_product_title': offeredProduct?.title,
     });
+  }
+
+  Future<TradeOffer> updateStatus({
+    required TradeOffer offer,
+    required TradeOfferStatus status,
+  }) async {
+    final userId = AuthService.currentUserId;
+    if (userId == null) {
+      throw StateError('Debes iniciar sesión para responder a una propuesta.');
+    }
+
+    if (!offer.isIncoming) {
+      throw StateError('Solo el destinatario puede aceptar o rechazar.');
+    }
+
+    if (!offer.isPending) {
+      throw StateError('Esta propuesta ya está respondida.');
+    }
+
+    await _client
+        .from(_table)
+        .update({'status': status.name})
+        .eq('id', offer.id)
+        .eq('to_user_id', userId);
+
+    final conversationId = offer.conversationId;
+    if (conversationId != null) {
+      final text = status == TradeOfferStatus.accepted
+          ? 'He aceptado tu propuesta de intercambio.'
+          : 'He rechazado tu propuesta de intercambio.';
+
+      await _chatRepository.addMessage(
+        conversationId: conversationId,
+        text: text,
+      );
+    }
+
+    return offer.copyWith(status: status);
   }
 }

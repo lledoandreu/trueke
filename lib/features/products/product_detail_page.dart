@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/favorites_provider.dart';
 import '../../models/product.dart';
+import '../auth/auth_service.dart';
+import '../trades/send_trade_offer_page.dart';
 import 'widgets/product_description.dart';
 import 'widgets/product_info.dart';
 import 'widgets/seller_card.dart';
 import 'widgets/trade_info.dart';
-import '../trades/send_trade_offer_page.dart';
 
 class ProductDetailPage extends ConsumerWidget {
   final Product product;
@@ -47,21 +48,28 @@ class ProductDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final favorites = ref.watch(favoritesProvider.notifier);
     final isFavorite = favorites.isFavorite(product);
+    final isOwnListing = product.ownerId == AuthService.currentUserId;
 
     return Scaffold(
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: SizedBox(
           height: 52,
-          child: FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => SendTradeOfferPage(product: product),
-              ),
-            ),
-            icon: const Icon(Icons.swap_horiz),
-            label: const Text('Proponer intercambio'),
-          ),
+          child: isOwnListing
+              ? OutlinedButton.icon(
+                  onPressed: null,
+                  icon: Icon(Icons.inventory_2_outlined),
+                  label: Text('Este anuncio es tuyo'),
+                )
+              : FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SendTradeOfferPage(product: product),
+                    ),
+                  ),
+                  icon: const Icon(Icons.swap_horiz),
+                  label: const Text('Proponer intercambio'),
+                ),
         ),
       ),
       body: CustomScrollView(

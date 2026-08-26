@@ -15,8 +15,22 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
   Future<void> sendOffer({
     required Product product,
     required String message,
+    Product? offeredProduct,
   }) async {
-    await _repository.sendOffer(product: product, message: message);
+    await _repository.sendOffer(
+      product: product,
+      message: message,
+      offeredProduct: offeredProduct,
+    );
+
+    state = AsyncData(await _repository.getOffers());
+  }
+
+  Future<void> respondToOffer({
+    required TradeOffer offer,
+    required TradeOfferStatus status,
+  }) async {
+    await _repository.updateStatus(offer: offer, status: status);
 
     state = AsyncData(await _repository.getOffers());
   }

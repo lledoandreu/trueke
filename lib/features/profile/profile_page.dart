@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/favorites_provider.dart';
 import '../auth/auth_service.dart';
+import '../favorites/favorites_page.dart';
 import '../products/providers/products_provider.dart';
 import '../trades/providers/trade_offers_provider.dart';
 import '../trades/trade_offers_page.dart';
@@ -99,11 +100,23 @@ class ProfilePage extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: _StatCard(label: 'Anuncios', value: '$listingCount'),
+                child: _StatCard(
+                  label: 'Anuncios',
+                  value: '$listingCount',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MyListingsPage()),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _StatCard(label: 'Favoritos', value: '$favoriteCount'),
+                child: _StatCard(
+                  label: 'Favoritos',
+                  value: '$favoriteCount',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FavoritesPage()),
+                  ),
+                ),
               ),
             ],
           ),
@@ -157,25 +170,33 @@ class ProfilePage extends ConsumerWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({required this.label, required this.value, this.onTap});
 
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(label),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(label),
+            ],
+          ),
         ),
       ),
     );

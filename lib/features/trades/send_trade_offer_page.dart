@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
 import '../chat/providers/chat_provider.dart';
+import '../products/providers/products_provider.dart';
 import 'providers/trade_offers_provider.dart';
 
 class SendTradeOfferPage extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class SendTradeOfferPage extends ConsumerStatefulWidget {
 class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
   late final TextEditingController _messageController;
   bool _isSending = false;
+  Product? _offeredProduct;
 
   @override
   void initState() {
@@ -69,7 +71,11 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
     try {
       await ref
           .read(tradeOffersProvider.notifier)
-          .sendOffer(product: widget.product, message: message);
+          .sendOffer(
+            product: widget.product,
+            message: message,
+            offeredProduct: _offeredProduct,
+          );
 
       ref.invalidate(chatProvider);
 
@@ -101,6 +107,14 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
 
   @override
   Widget build(BuildContext context) {
+    final myListings =
+        ref
+            .watch(productsProvider)
+            .valueOrNull
+            ?.where((product) => product.ownerId == AuthService.currentUserId)
+            .toList() ??
+        const <Product>[];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Proponer intercambio')),
       body: Padding(
@@ -126,7 +140,40 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
+            const Text(
+              '¿Qué ofreces a cambio?',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            if (myListings.isEmpty)
+              const Text(
+                'Publica un anuncio para incluirlo en la propuesta. También puedes enviar solo el mensaje.',
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: myListings.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final listing = myListings[index];
+                    final selected = _offeredProduct?.id == listing.id;
+
+                    return ChoiceChip(
+                      selected: selected,
+                      label: Text(listing.title),
+                      onSelected: _isSending
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _offeredProduct = value ? listing : null;
+                              });
+                            },
+                    );
+                  },
+                ),
+              ),
+            if (myListings.isEmpty) const Spacer(),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
