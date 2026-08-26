@@ -19,12 +19,9 @@ class ChatPage extends ConsumerWidget {
         ),
       ),
       body: conversationsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stackTrace) => Center(
-          child: Text('Error cargando chats: $error'),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) =>
+            Center(child: Text('Error cargando chats: $error')),
         data: (conversations) {
           if (conversations.isEmpty) {
             return const Center(
@@ -39,9 +36,7 @@ class ChatPage extends ConsumerWidget {
             itemBuilder: (context, index) {
               final conversation = conversations[index];
               final messages = conversation.messages;
-              final lastMessage = messages.isEmpty
-                  ? null
-                  : messages.last;
+              final lastMessage = messages.isEmpty ? null : messages.last;
 
               return ListTile(
                 contentPadding: const EdgeInsets.symmetric(
@@ -60,9 +55,7 @@ class ChatPage extends ConsumerWidget {
                 ),
                 title: Text(
                   conversation.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -75,9 +68,8 @@ class ChatPage extends ConsumerWidget {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => ChatDetailPage(
-                        conversationId: conversation.id,
-                      ),
+                      builder: (_) =>
+                          ChatDetailPage(conversationId: conversation.id),
                     ),
                   );
                 },

@@ -50,7 +50,6 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 }
 
-final productsProvider =
-    AsyncNotifierProvider<ProductsNotifier, List<Product>>(
+final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
   ProductsNotifier.new,
 );

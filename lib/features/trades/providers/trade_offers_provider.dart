@@ -1,63 +1,28 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../models/product.dart';
 import '../../../models/trade_offer.dart';
+import '../repositories/trade_offer_repository.dart';
 
 class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
-  static const _offersKey = 'trade_offers';
+  TradeOfferRepository get _repository => TradeOfferRepository();
 
   @override
-  Future<List<TradeOffer>> build() async {
-    final preferences = await SharedPreferences.getInstance();
-    final savedOffers = preferences.getString(_offersKey);
-
-    if (savedOffers == null) {
-      return [];
-    }
-
-    return (jsonDecode(savedOffers) as List<dynamic>)
-        .map(
-          (item) => TradeOffer.fromJson(
-            item as Map<String, dynamic>,
-          ),
-        )
-        .toList();
+  Future<List<TradeOffer>> build() {
+    return _repository.getOffers();
   }
 
   Future<void> sendOffer({
-    required String productId,
-    required String productTitle,
+    required Product product,
     required String message,
   }) async {
-    final List<TradeOffer> updatedOffers = [
-      TradeOffer(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        productId: productId,
-        productTitle: productTitle,
-        message: message,
-        createdAt: DateTime.now(),
-      ),
-      ...(state.valueOrNull ?? <TradeOffer>[]),
-    ];
+    await _repository.sendOffer(product: product, message: message);
 
-    state = AsyncData<List<TradeOffer>>(updatedOffers);
-
-    final preferences = await SharedPreferences.getInstance();
-
-    await preferences.setString(
-      _offersKey,
-      jsonEncode(
-        updatedOffers
-            .map((offer) => offer.toJson())
-            .toList(),
-      ),
-    );
+    state = AsyncData(await _repository.getOffers());
   }
 }
 
 final tradeOffersProvider =
     AsyncNotifierProvider<TradeOffersNotifier, List<TradeOffer>>(
-  TradeOffersNotifier.new,
-);
+      TradeOffersNotifier.new,
+    );

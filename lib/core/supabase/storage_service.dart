@@ -17,16 +17,8 @@ class StorageService {
 
     await _client.storage
         .from('avatars')
-        .upload(
-          path,
-          file,
-          fileOptions: const FileOptions(
-            upsert: true,
-          ),
-        );
+        .upload(path, file, fileOptions: const FileOptions(upsert: true));
 
-    return _client.storage
-        .from('avatars')
-        .getPublicUrl(path);
+    return _client.storage.from('avatars').getPublicUrl(path);
   }
 }

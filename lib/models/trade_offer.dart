@@ -8,6 +8,10 @@ class TradeOffer {
     required this.message,
     required this.createdAt,
     this.status = TradeOfferStatus.sent,
+    this.fromUserId,
+    this.toUserId,
+    this.conversationId,
+    this.isIncoming = false,
   });
 
   final String id;
@@ -16,22 +20,35 @@ class TradeOffer {
   final String message;
   final DateTime createdAt;
   final TradeOfferStatus status;
+  final String? fromUserId;
+  final String? toUserId;
+  final String? conversationId;
+  final bool isIncoming;
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'productId': productId,
-    'productTitle': productTitle,
-    'message': message,
-    'createdAt': createdAt.toIso8601String(),
-    'status': status.name,
-  };
+  factory TradeOffer.fromJson(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
+    final fromUserId =
+        json['from_user_id'] as String? ?? json['fromUserId'] as String?;
+    final createdAtRaw =
+        json['created_at'] as String? ?? json['createdAt'] as String;
+    final statusName = json['status'] as String? ?? TradeOfferStatus.sent.name;
 
-  factory TradeOffer.fromJson(Map<String, dynamic> json) => TradeOffer(
-    id: json['id'] as String,
-    productId: json['productId'] as String,
-    productTitle: json['productTitle'] as String,
-    message: json['message'] as String,
-    createdAt: DateTime.parse(json['createdAt'] as String),
-    status: TradeOfferStatus.values.byName(json['status'] as String),
-  );
+    return TradeOffer(
+      id: json['id'] as String,
+      productId: json['product_id'] as String? ?? json['productId'] as String,
+      productTitle:
+          json['product_title'] as String? ?? json['productTitle'] as String,
+      message: json['message'] as String,
+      createdAt: DateTime.parse(createdAtRaw),
+      status: TradeOfferStatus.values.byName(statusName),
+      fromUserId: fromUserId,
+      toUserId: json['to_user_id'] as String? ?? json['toUserId'] as String?,
+      conversationId:
+          json['conversation_id'] as String? ??
+          json['conversationId'] as String?,
+      isIncoming: currentUserId != null && fromUserId != currentUserId,
+    );
+  }
 }

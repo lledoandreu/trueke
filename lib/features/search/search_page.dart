@@ -32,8 +32,7 @@ class SearchPage extends ConsumerWidget {
           _FilterChips(filters: filters),
           Expanded(
             child: productsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -63,8 +62,7 @@ class SearchPage extends ConsumerWidget {
                     return GridView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                       itemCount: products.length,
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: columns,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,

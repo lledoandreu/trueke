@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/trade_offer.dart';
+import '../chat/chat_detail_page.dart';
 import 'providers/trade_offers_provider.dart';
 
 class TradeOffersPage extends ConsumerWidget {
@@ -22,7 +23,7 @@ class TradeOffersPage extends ConsumerWidget {
                 child: Padding(
                   padding: EdgeInsets.all(32),
                   child: Text(
-                    'Aún no has enviado propuestas de intercambio.',
+                    'Aún no hay propuestas de intercambio.',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -44,6 +45,18 @@ class _OfferTile extends StatelessWidget {
 
   final TradeOffer offer;
 
+  String get _statusLabel {
+    if (offer.isIncoming) {
+      return 'Recibida';
+    }
+
+    return switch (offer.status) {
+      TradeOfferStatus.sent => 'Enviada',
+      TradeOfferStatus.accepted => 'Aceptada',
+      TradeOfferStatus.declined => 'Rechazada',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -55,7 +68,17 @@ class _OfferTile extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: const Chip(label: Text('Enviada')),
+        trailing: Chip(label: Text(_statusLabel)),
+        onTap: offer.conversationId == null
+            ? null
+            : () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ChatDetailPage(conversationId: offer.conversationId!),
+                  ),
+                );
+              },
       ),
     );
   }

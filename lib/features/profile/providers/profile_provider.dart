@@ -20,6 +20,5 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
       .read(profileRepositoryProvider)
       .getMyProfile(userId);
 
-
   return profile;
 });

@@ -76,8 +76,7 @@ class ProfilePage extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (profile?.username != null)
-                    Text('@${profile!.username}'),
+                  if (profile?.username != null) Text('@${profile!.username}'),
                   if (profile != null)
                     TextButton.icon(
                       icon: const Icon(Icons.edit),
@@ -85,8 +84,7 @@ class ProfilePage extends ConsumerWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                EditProfilePage(profile: profile),
+                            builder: (_) => EditProfilePage(profile: profile),
                           ),
                         );
                       },
@@ -101,17 +99,11 @@ class ProfilePage extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: _StatCard(
-                  label: 'Anuncios',
-                  value: '$listingCount',
-                ),
+                child: _StatCard(label: 'Anuncios', value: '$listingCount'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _StatCard(
-                  label: 'Favoritos',
-                  value: '$favoriteCount',
-                ),
+                child: _StatCard(label: 'Favoritos', value: '$favoriteCount'),
               ),
             ],
           ),
@@ -125,11 +117,9 @@ class ProfilePage extends ConsumerWidget {
               subtitle: const Text(
                 'Consulta, edita o elimina artículos publicados',
               ),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const MyListingsPage(),
-                ),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const MyListingsPage())),
             ),
           ),
 
@@ -140,12 +130,10 @@ class ProfilePage extends ConsumerWidget {
               leading: const Icon(Icons.swap_horiz),
               title: const Text('Mis propuestas'),
               subtitle: Text(
-                '${offersAsync.valueOrNull?.length ?? 0} enviadas',
+                '${offersAsync.valueOrNull?.length ?? 0} propuestas',
               ),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const TradeOffersPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const TradeOffersPage()),
               ),
             ),
           ),
@@ -156,9 +144,7 @@ class ProfilePage extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Cerrar sesión'),
-              subtitle: const Text(
-                'Volverás a la pantalla de acceso',
-              ),
+              subtitle: const Text('Volverás a la pantalla de acceso'),
               onTap: () async {
                 await AuthService.signOut();
               },
@@ -171,10 +157,7 @@ class ProfilePage extends ConsumerWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-  });
+  const _StatCard({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -188,10 +171,7 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(label),

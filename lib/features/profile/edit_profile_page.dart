@@ -10,20 +10,15 @@ import '../auth/auth_service.dart';
 import 'providers/profile_provider.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
-  const EditProfilePage({
-    super.key,
-    required this.profile,
-  });
+  const EditProfilePage({super.key, required this.profile});
 
   final Profile profile;
 
   @override
-  ConsumerState<EditProfilePage> createState() =>
-      _EditProfilePageState();
+  ConsumerState<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState
-    extends ConsumerState<EditProfilePage> {
+class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
 
@@ -53,9 +48,7 @@ class _EditProfilePageState
   Future<void> _pickAvatar() async {
     final picker = ImagePicker();
 
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    final image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) {
       return;
@@ -75,9 +68,7 @@ class _EditProfilePageState
       String? avatarUrl = widget.profile.avatarUrl;
 
       if (_avatarFile != null) {
-        final storage = StorageService(
-          AuthService.supabase,
-        );
+        final storage = StorageService(AuthService.supabase);
 
         avatarUrl = await storage.uploadAvatar(
           file: _avatarFile!,
@@ -91,9 +82,7 @@ class _EditProfilePageState
         avatarUrl: avatarUrl,
       );
 
-      await ref
-          .read(profileRepositoryProvider)
-          .updateProfile(updated);
+      await ref.read(profileRepositoryProvider).updateProfile(updated);
 
       ref.invalidate(profileProvider);
 
@@ -103,11 +92,9 @@ class _EditProfilePageState
 
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Perfil actualizado'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
     } finally {
       if (mounted) {
         setState(() {
@@ -120,9 +107,7 @@ class _EditProfilePageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar perfil'),
-      ),
+      appBar: AppBar(title: const Text('Editar perfil')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -133,16 +118,10 @@ class _EditProfilePageState
               backgroundImage: _avatarFile != null
                   ? FileImage(_avatarFile!)
                   : widget.profile.avatarUrl != null
-                      ? NetworkImage(
-                          widget.profile.avatarUrl!,
-                        )
-                      : null,
-              child: _avatarFile == null &&
-                      widget.profile.avatarUrl == null
-                  ? const Icon(
-                      Icons.camera_alt,
-                      size: 32,
-                    )
+                  ? NetworkImage(widget.profile.avatarUrl!)
+                  : null,
+              child: _avatarFile == null && widget.profile.avatarUrl == null
+                  ? const Icon(Icons.camera_alt, size: 32)
                   : null,
             ),
           ),
@@ -151,18 +130,14 @@ class _EditProfilePageState
 
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Nombre visible',
-            ),
+            decoration: const InputDecoration(labelText: 'Nombre visible'),
           ),
 
           const SizedBox(height: 16),
 
           TextField(
             controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: 'Usuario',
-            ),
+            decoration: const InputDecoration(labelText: 'Usuario'),
           ),
 
           const SizedBox(height: 24),

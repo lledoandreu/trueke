@@ -45,10 +45,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    await _client.auth.signInWithPassword(email: email, password: password);
 
     await _ensureProfile();
   }

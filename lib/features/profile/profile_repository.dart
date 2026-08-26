@@ -27,9 +27,7 @@ class ProfileRepository {
   }
 
   Future<void> createProfile(Profile profile) async {
-    await _client
-        .from('profiles')
-        .insert(profile.toMap());
+    await _client.from('profiles').insert(profile.toMap());
   }
 
   Future<void> updateProfile(Profile profile) async {

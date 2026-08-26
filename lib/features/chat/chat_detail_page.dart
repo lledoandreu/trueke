@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/chat_provider.dart';
 
 class ChatDetailPage extends ConsumerStatefulWidget {
-  const ChatDetailPage({
-    super.key,
-    required this.conversationId,
-  });
+  const ChatDetailPage({super.key, required this.conversationId});
 
   final String conversationId;
 
@@ -31,10 +28,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       return;
     }
 
-    await ref.read(chatProvider.notifier).addMessage(
-          conversationId: widget.conversationId,
-          text: text,
-        );
+    await ref
+        .read(chatProvider.notifier)
+        .addMessage(conversationId: widget.conversationId, text: text);
 
     _messageController.clear();
   }
@@ -49,9 +45,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
     if (conversation == null) {
       return const Scaffold(
-        body: Center(
-          child: Text('Conversación no encontrada.'),
-        ),
+        body: Center(child: Text('Conversación no encontrada.')),
       );
     }
 
@@ -62,16 +56,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           children: [
             Text(
               conversation.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
               conversation.product,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
@@ -90,9 +79,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
                   child: Container(
-                    constraints: const BoxConstraints(
-                      maxWidth: 320,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 320),
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -107,9 +94,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     child: Text(
                       message.text,
                       style: TextStyle(
-                        color: message.isMine
-                            ? Colors.white
-                            : Colors.black87,
+                        color: message.isMine ? Colors.white : Colors.black87,
                       ),
                     ),
                   ),
@@ -119,12 +104,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                12,
-                8,
-                12,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: Row(
                 children: [
                   Expanded(
