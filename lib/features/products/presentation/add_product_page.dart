@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/services/image_picker_service.dart';
+import 'package:trueke/core/services/image_picker_service.dart';
 import '../data/product_upload_provider.dart';
 
 class AddProductPage extends ConsumerStatefulWidget {
@@ -87,9 +87,9 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
+                    border: Border.all(color: Colors.grey),
                   ),
                   child: _selectedImage != null
                       ? ClipRRect(

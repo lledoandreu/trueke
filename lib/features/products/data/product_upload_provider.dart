@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/services/storage_service.dart';
+import 'package:trueke/core/services/storage_service.dart';
 
 class ProductUploadNotifier extends StateNotifier<AsyncValue<void>> {
   ProductUploadNotifier() : super(const AsyncValue.data(null));
@@ -26,7 +26,7 @@ class ProductUploadNotifier extends StateNotifier<AsyncValue<void>> {
         'name': title,
         'description': description,
         'price': price,
-        'images': imageUrl != null ? [imageUrl] : [],
+        'images': imageUrl != null ? <String>[imageUrl] : <String>[],
         'user_id': _supabase.auth.currentUser?.id,
       });
 
