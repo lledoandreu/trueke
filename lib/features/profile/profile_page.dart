@@ -104,7 +104,9 @@ class ProfilePage extends ConsumerWidget {
                   label: 'Anuncios',
                   value: '$listingCount',
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const MyListingsPage()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MyListingsPage(),
+                    ),
                   ),
                 ),
               ),
@@ -114,7 +116,9 @@ class ProfilePage extends ConsumerWidget {
                   label: 'Favoritos',
                   value: '$favoriteCount',
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const FavoritesPage()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => const FavoritesPage(),
+                    ),
                   ),
                 ),
               ),
@@ -130,9 +134,9 @@ class ProfilePage extends ConsumerWidget {
               subtitle: const Text(
                 'Consulta, edita o elimina artículos publicados',
               ),
-              onTap: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute<void>(builder: (_) => const MyListingsPage())),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const MyListingsPage()),
+              ),
             ),
           ),
 
@@ -146,7 +150,9 @@ class ProfilePage extends ConsumerWidget {
                 '${offersAsync.valueOrNull?.length ?? 0} propuestas',
               ),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const TradeOffersPage()),
+                MaterialPageRoute<void>(
+                  builder: (_) => const TradeOffersPage(),
+                ),
               ),
             ),
           ),

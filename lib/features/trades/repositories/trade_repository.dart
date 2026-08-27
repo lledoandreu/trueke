@@ -22,7 +22,9 @@ class SupabaseTradeRepository implements BaseTradeRepository {
           .select()
           .eq('receiver_id', currentUserId);
 
-      return response.map((json) => TradeOffer.fromJson(json as Map<String, dynamic>)).toList();
+      return response
+          .map((json) => TradeOffer.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -40,7 +42,9 @@ class SupabaseTradeRepository implements BaseTradeRepository {
           .select()
           .eq('sender_id', currentUserId);
 
-      return response.map((json) => TradeOffer.fromJson(json as Map<String, dynamic>)).toList();
+      return response
+          .map((json) => TradeOffer.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }

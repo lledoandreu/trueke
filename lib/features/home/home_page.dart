@@ -109,7 +109,10 @@ class HomePage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                 child: Text(
                   filters.hasActiveFilters ? 'Resultados' : 'Recomendados',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

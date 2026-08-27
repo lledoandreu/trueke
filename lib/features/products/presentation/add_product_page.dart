@@ -16,7 +16,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
-  
+
   final _imagePickerService = ImagePickerService();
   File? _selectedImage;
   bool _isPicking = false;
@@ -44,7 +44,9 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
     final double? price = double.tryParse(_priceController.text.trim());
     if (price == null) return;
 
-    final bool success = await ref.read(productUploadProvider.notifier).uploadProduct(
+    final bool success = await ref
+        .read(productUploadProvider.notifier)
+        .uploadProduct(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           price: price,
@@ -100,9 +102,16 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 8),
-                              Text('Añadir foto del producto', style: TextStyle(color: Colors.grey)),
+                              Text(
+                                'Añadir foto del producto',
+                                style: TextStyle(color: Colors.grey),
+                              ),
                             ],
                           ),
                         ),
@@ -111,31 +120,53 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título', border: OutlineInputBorder()),
-                validator: (value) => value == null || value.isEmpty ? 'Introduce un título' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Título',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Introduce un título'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Descripción', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  border: OutlineInputBorder(),
+                ),
                 maxLines: 3,
-                validator: (value) => value == null || value.isEmpty ? 'Introduce una descripción' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Introduce una descripción'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _priceController,
-                decoration: const InputDecoration(labelText: 'Precio estimado (€)', border: OutlineInputBorder(), prefixText: '€ '),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Precio estimado (€)',
+                  border: OutlineInputBorder(),
+                  prefixText: '€ ',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Introduce un precio';
-                  if (double.tryParse(value) == null) return 'Introduce un número válido';
+                  if (value == null || value.isEmpty) {
+                    return 'Introduce un precio';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Introduce un número válido';
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: uploadState.isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
                 child: uploadState.isLoading
                     ? const CircularProgressIndicator()
                     : const Text('Publicar Artículo'),

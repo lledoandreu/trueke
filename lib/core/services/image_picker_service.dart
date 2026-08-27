@@ -9,7 +9,8 @@ class ImagePickerService {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 80, // Optimiza el tamaño reduciendo la calidad al 80% automáticamente
+        imageQuality:
+            80, // Optimiza el tamaño reduciendo la calidad al 80% automáticamente
       );
 
       if (pickedFile != null) {

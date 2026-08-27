@@ -59,7 +59,7 @@ class Product {
     id: json['id'] as String,
     title: json['title'] as String,
     description: json['description'] as String? ?? '',
-      images: (json['images'] as List<dynamic>).cast<String>(),
+    images: (json['images'] as List<dynamic>).cast<String>(),
     price: (json['price'] as num?)?.toDouble(),
     tradeType: TradeType.values.byName(json['trade_type'] as String),
     category: json['category'] as String? ?? 'Otros',

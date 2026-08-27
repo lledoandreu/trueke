@@ -39,6 +39,7 @@ class ProductUploadNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final productUploadProvider = StateNotifierProvider<ProductUploadNotifier, AsyncValue<void>>((ref) {
-  return ProductUploadNotifier();
-});
+final productUploadProvider =
+    StateNotifierProvider<ProductUploadNotifier, AsyncValue<void>>((ref) {
+      return ProductUploadNotifier();
+    });

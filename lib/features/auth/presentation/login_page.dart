@@ -28,9 +28,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final authNotifier = ref.read(authProvider.notifier);
     if (_isSignUp) {
-      authNotifier.signUp(_emailController.text.trim(), _passwordController.text.trim());
+      authNotifier.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
     } else {
-      authNotifier.signIn(_emailController.text.trim(), _passwordController.text.trim());
+      authNotifier.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
     }
   }
 
@@ -42,9 +48,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AsyncValue<User?>>(authProvider, (_, next) {
       next.whenOrNull(
         error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${error.toString()}')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${error.toString()}')));
         },
       );
     });
@@ -81,7 +87,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty || !value.contains('@')) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        !value.contains('@')) {
                       return 'Introduce un correo válido';
                     }
                     return null;
@@ -120,9 +128,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       _isSignUp = !_isSignUp;
                     });
                   },
-                  child: Text(_isSignUp
-                      ? '¿Ya tienes cuenta? Inicia sesión'
-                      : '¿No tienes cuenta? Regístrate aquí'),
+                  child: Text(
+                    _isSignUp
+                        ? '¿Ya tienes cuenta? Inicia sesión'
+                        : '¿No tienes cuenta? Regístrate aquí',
+                  ),
                 ),
               ],
             ),

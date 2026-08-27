@@ -10,7 +10,7 @@ class FavoritesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Leemos el estado real gestionado por la IA de forma automática
-    final List<Product> favoriteProducts = ref.watch(favoritesProvider); 
+    final List<Product> favoriteProducts = ref.watch(favoritesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -69,7 +69,10 @@ class FavoritesPage extends ConsumerWidget {
                                 )
                               : Container(
                                   color: Colors.grey,
-                                  child: const Icon(Icons.image, color: Colors.grey),
+                                  child: const Icon(
+                                    Icons.image,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                         ),
                         Padding(

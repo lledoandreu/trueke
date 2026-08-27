@@ -2,9 +2,15 @@ name: Flutter CI Pipeline
 
 on:
   push:
-    branches: [ main, master, dev ]
+    branches:
+      - main
+      - master
+      - dev
   pull_request:
-    branches: [ main, master, dev ]
+    branches:
+      - main
+      - master
+      - dev
 
 jobs:
   build:
@@ -18,20 +24,23 @@ jobs:
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: zulu
+          java-version: "17"
 
       - name: Configurar Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Analizar código estático (Linter)
+      - name: Formatear código
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analizar código estático
         run: flutter analyze
 
-      - name: Ejecutar Pruebas Automatizadas
+      - name: Ejecutar pruebas automatizadas
         run: flutter test

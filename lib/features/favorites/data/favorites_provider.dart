@@ -20,6 +20,7 @@ class FavoritesNotifier extends StateNotifier<List<Product>> {
 }
 
 // Proveedor global para usar en las pantallas
-final favoritesProvider = StateNotifierProvider<FavoritesNotifier, List<Product>>((ref) {
-  return FavoritesNotifier();
-});
+final favoritesProvider =
+    StateNotifierProvider<FavoritesNotifier, List<Product>>((ref) {
+      return FavoritesNotifier();
+    });

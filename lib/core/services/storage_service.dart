@@ -8,18 +8,23 @@ class StorageService {
   Future<String?> uploadProductImage(File imageFile) async {
     try {
       // Generamos un nombre único para el archivo basado en el tiempo actual
-      final String fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String fileName =
+          'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final String path = 'products/$fileName';
 
       // Subimos el archivo físicamente al Bucket llamado 'images'
-      await _supabase.storage.from('images').upload(
+      await _supabase.storage
+          .from('images')
+          .upload(
             path,
             imageFile,
             fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
           );
 
       // Obtenemos la URL pública oficial de internet para guardarla en el producto
-      final String publicUrl = _supabase.storage.from('images').getPublicUrl(path);
+      final String publicUrl = _supabase.storage
+          .from('images')
+          .getPublicUrl(path);
       return publicUrl;
     } catch (e) {
       // Devuelve null de forma segura si el Bucket no existe o falla la red
