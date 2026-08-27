@@ -11,14 +11,13 @@ class TradeOffersPage extends ConsumerWidget {
     if (context.mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Oferta ${newStatus == 'accepted' ? 'aceptada' : 'rechazada'} con éxito')),
+          SnackBar(content: Text('Oferta actualizada con éxito')),
         );
-        // Refrescamos los proveedores de forma automática para actualizar la pantalla
         ref.invalidate(incomingOffersProvider);
         ref.invalidate(outgoingOffersProvider);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al actualizar el estado de la oferta')),
+          const SnackBar(content: Text('Error al actualizar la oferta')),
         );
       }
     }
@@ -43,13 +42,15 @@ class TradeOffersPage extends ConsumerWidget {
         ),
         body: TabBarView(
           children: [
-            // Pestaña 1: Ofertas Recibidas
             incomingAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
-              data: (offers) => _OffersList(offers: offers, isIncoming: true, onAction: (id, status) => _handleStatusUpdate(context, ref, id, status)),
+              data: (offers) => _OffersList(
+                offers: offers, 
+                isIncoming: true, 
+                onAction: (id, status) => _handleStatusUpdate(context, ref, id, status)
+              ),
             ),
-            // Pestaña 2: Ofertas Enviadas
             outgoingAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
@@ -69,35 +70,34 @@ class _OffersList extends StatelessWidget {
 
   const _OffersList({required this.offers, required this.isIncoming, this.onAction});
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'accepted': return Colors.green;
-      case 'rejected': return Colors.red;
-      default: return Colors.orange;
-    }
+  Color _getStatusColor(dynamic status) {
+    final statusStr = status.toString().toLowerCase();
+    if (statusStr.contains('accepted')) return Colors.green;
+    if (statusStr.contains('rejected')) return Colors.red;
+    return Colors.orange;
   }
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'accepted': return 'Aceptado';
-      case 'rejected': return 'Rechazado';
-      default: return 'Pendiente';
-    }
+  String _getStatusText(dynamic status) {
+    final statusStr = status.toString().toLowerCase();
+    if (statusStr.contains('accepted')) return 'Aceptado';
+    if (statusStr.contains('rejected')) return 'Rechazado';
+    return 'Pendiente';
   }
 
   @override
   Widget build(BuildContext context) {
     if (offers.isEmpty) {
-      return const Center(child: Text('No hay propuestas de intercambio en esta sección.'));
+      return const Center(child: Text('No hay propuestas de intercambio.'));
     }
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: offers.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final offer = offers[index];
-        final isPending = offer.status == 'pending';
+        final statusStr = offer.status.toString().toLowerCase();
+        final isPending = !statusStr.contains('accepted') && !statusStr.contains('rejected');
 
         return Card(
           elevation: 2,
@@ -108,13 +108,13 @@ class _OffersList extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Oferta # ${offer.id.substring(0, 8)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(offer.status).withOpacity(0.1),
+                        color: _getStatusColor(offer.status).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -128,9 +128,6 @@ class _OffersList extends StatelessWidget {
                 const Text('Detalle del Trueke:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text('ID del Producto Ofrecido: ${offer.offeredProductId}'),
-                const SizedBox(height: 4),
-                if (offer.notes != null && offer.notes!.isNotEmpty)
-                  Text('Nota: "${offer.notes}"', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
                 if (isIncoming && isPending && onAction != null) ...[
                   const Divider(height: 24),
                   Row(
