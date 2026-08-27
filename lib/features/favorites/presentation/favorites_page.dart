@@ -8,7 +8,6 @@ class FavoritesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Lista de ejemplo: En el próximo sprint la conectaremos con tu base de datos o provider real
     final List<Product> favoriteProducts = []; 
 
     return Scaffold(
@@ -67,7 +66,7 @@ class FavoritesPage extends ConsumerWidget {
                                   width: double.infinity,
                                 )
                               : Container(
-                                  color: Colors.grey[300],
+                                  color: Colors.grey,
                                   child: const Icon(Icons.image, color: Colors.grey),
                                 ),
                         ),
