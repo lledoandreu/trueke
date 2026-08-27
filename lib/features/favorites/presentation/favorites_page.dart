@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/product.dart';
 import '../../products/product_detail_page.dart';
+import '../data/favorites_provider.dart';
 
 class FavoritesPage extends ConsumerWidget {
   const FavoritesPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<Product> favoriteProducts = []; 
+    // Leemos el estado real gestionado por la IA de forma automática
+    final List<Product> favoriteProducts = ref.watch(favoritesProvider); 
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +63,7 @@ class FavoritesPage extends ConsumerWidget {
                         Expanded(
                           child: product.images.isNotEmpty
                               ? Image.network(
-                                  product.images[0],
+                                  product.images.first,
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                 )
