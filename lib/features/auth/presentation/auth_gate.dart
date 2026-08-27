@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../home/home_page.dart';
+import 'login_page.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -15,11 +16,7 @@ class AuthGate extends StatelessWidget {
       return const HomePage();
     }
 
-    // Si no hay sesión, devolvemos un contenedor seguro para evitar errores de compilación
-    return const Scaffold(
-      body: Center(
-        child: Text('Pantalla de Autenticación'),
-      ),
-    );
+    // Si no hay sesión o ha expirado, lo redirige de forma automática a la pantalla de Login
+    return const LoginPage();
   }
 }
