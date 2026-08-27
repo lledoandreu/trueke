@@ -11,7 +11,7 @@ class TradeOffersPage extends ConsumerWidget {
     if (context.mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Oferta actualizada con éxito')),
+          const SnackBar(content: Text('Oferta actualizada con éxito')),
         );
         ref.invalidate(incomingOffersProvider);
         ref.invalidate(outgoingOffersProvider);
