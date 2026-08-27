@@ -9,7 +9,6 @@ class ProductUploadNotifier extends StateNotifier<AsyncValue<void>> {
   final _supabase = Supabase.instance.client;
   final _storageService = StorageService();
 
-  // Método automático para gestionar la subida completa del artículo
   Future<bool> uploadProduct({
     required String title,
     required String description,
@@ -19,18 +18,15 @@ class ProductUploadNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       String? imageUrl;
-      
-      // 1. Si el usuario seleccionó una imagen, la subimos primero al Storage de Supabase
       if (imageFile != null) {
         imageUrl = await _storageService.uploadProductImage(imageFile);
       }
 
-      // 2. Insertamos el registro definitivo de textos y URL en la tabla 'products'
       await _supabase.from('products').insert({
         'name': title,
         'description': description,
         'price': price,
-        'images': imageUrl != null ? [imageUrl] : [], // Guardamos la URL en tu lista de imágenes
+        'images': imageUrl != null ? [imageUrl] : [],
         'user_id': _supabase.auth.currentUser?.id,
       });
 

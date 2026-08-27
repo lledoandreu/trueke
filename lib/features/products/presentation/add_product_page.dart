@@ -29,11 +29,9 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
     super.dispose();
   }
 
-  // Abre la galería de fotos de forma automática usando tu servicio local
   Future<void> _selectImage() async {
     if (_isPicking) return;
     setState(() => _isPicking = true);
-    
     final File? image = await _imagePickerService.pickImageFromGallery();
     if (image != null) {
       setState(() => _selectedImage = image);
@@ -43,7 +41,6 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     final double? price = double.tryParse(_priceController.text.trim());
     if (price == null) return;
 
@@ -77,9 +74,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Subir un Producto'),
-      ),
+      appBar: AppBar(title: const Text('Subir un Producto')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -94,7 +89,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[400]!),
+                    border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: _selectedImage != null
                       ? ClipRRect(
@@ -116,7 +111,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título del artículo', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Título', border: OutlineInputBorder()),
                 validator: (value) => value == null || value.isEmpty ? 'Introduce un título' : null,
               ),
               const SizedBox(height: 16),
