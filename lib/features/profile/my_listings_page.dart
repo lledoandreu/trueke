@@ -96,7 +96,7 @@ class MyListingsPage extends ConsumerWidget {
                   product: product,
                   onEdit: () async {
                     await Navigator.of(context).push(
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (_) => PublishProductPage(product: product),
                       ),
                     );

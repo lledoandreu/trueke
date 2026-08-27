@@ -67,7 +67,7 @@ class ChatPage extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (_) =>
                           ChatDetailPage(conversationId: conversation.id),
                     ),

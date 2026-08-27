@@ -16,9 +16,9 @@ class PromoBanner extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

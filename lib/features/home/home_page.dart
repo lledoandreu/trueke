@@ -55,7 +55,7 @@ class HomePage extends ConsumerWidget {
                 height: 110,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       CategoryChip(
@@ -106,10 +106,10 @@ class HomePage extends ConsumerWidget {
 
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                 child: Text(
                   filters.hasActiveFilters ? 'Resultados' : 'Recomendados',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

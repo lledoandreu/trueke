@@ -54,7 +54,7 @@ class SellerCard extends StatelessWidget {
               }
 
               Navigator.of(context).push(
-                MaterialPageRoute(
+                MaterialPageRoute<void>(
                   builder: (_) => SendTradeOfferPage(product: product),
                 ),
               );

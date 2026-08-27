@@ -20,7 +20,7 @@ class HomeHeader extends ConsumerWidget {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const TradeOffersPage()),
+                MaterialPageRoute<void>(builder: (_) => const TradeOffersPage()),
               );
             },
             icon: const Icon(Icons.notifications_none),

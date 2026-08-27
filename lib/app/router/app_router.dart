@@ -11,17 +11,17 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute<void>(builder: (_) => const HomePage());
 
       case AppRoutes.product:
         final product = settings.arguments as Product;
 
-        return MaterialPageRoute(
+        return MaterialPageRoute<void>(
           builder: (_) => ProductDetailPage(product: product),
         );
 
       default:
-        return MaterialPageRoute(
+        return MaterialPageRoute<void>(
           builder: (_) => Scaffold(
             appBar: AppBar(title: const Text('Página no encontrada')),
             body: const Center(child: Text('404')),

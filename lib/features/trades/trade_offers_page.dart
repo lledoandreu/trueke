@@ -142,7 +142,7 @@ class _OfferTile extends ConsumerWidget {
     }
 
     await Navigator.of(context).push(
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (_) => ChatDetailPage(conversationId: conversationId),
       ),
     );

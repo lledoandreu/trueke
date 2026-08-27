@@ -58,12 +58,12 @@ class ProductDetailPage extends ConsumerWidget {
           child: isOwnListing
               ? OutlinedButton.icon(
                   onPressed: null,
-                  icon: Icon(Icons.inventory_2_outlined),
-                  label: Text('Este anuncio es tuyo'),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Este anuncio es tuyo'),
                 )
               : FilledButton.icon(
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (_) => SendTradeOfferPage(product: product),
                     ),
                   ),
