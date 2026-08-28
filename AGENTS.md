@@ -98,3 +98,8 @@ Prioridad 4: calidad del código.
 Prioridad 5: mejoras estéticas/refactorizaciones.
 
 No realizar refactorizaciones grandes cuando no sean necesarias para la tarea.
+
+## Integración automática
+
+El flujo de integración utiliza GitHub Actions para validar formato, análisis
+estático y tests antes de integrar cambios.

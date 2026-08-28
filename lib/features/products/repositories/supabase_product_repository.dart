@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../auth/auth_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../models/product.dart';
 import 'product_repository.dart';
 
@@ -11,6 +11,7 @@ class SupabaseProductRepository implements ProductRepository {
   SupabaseProductRepository();
 
   final SupabaseClient _client = Supabase.instance.client;
+  final StorageService _storageService = StorageService();
 
   static const _table = 'products';
 
@@ -34,7 +35,9 @@ class SupabaseProductRepository implements ProductRepository {
         .eq('id', id)
         .maybeSingle();
 
-    if (response == null) return null;
+    if (response == null) {
+      return null;
+    }
 
     return Product.fromJson(response);
   }
@@ -56,20 +59,6 @@ class SupabaseProductRepository implements ProductRepository {
 
   @override
   Future<String> uploadProductImage(XFile file) async {
-    final userId = AuthService.currentUserId;
-    if (userId == null) {
-      throw StateError('Debes iniciar sesión para subir imágenes.');
-    }
-
-    final fileName =
-        '$userId/${DateTime.now().millisecondsSinceEpoch}_${file.name}';
-
-    await Supabase.instance.client.storage
-        .from('product-images')
-        .upload(fileName, File(file.path));
-
-    return Supabase.instance.client.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
+    return _storageService.uploadProductImage(File(file.path));
   }
 }

@@ -1,34 +1,53 @@
 import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StorageService {
-  final _supabase = Supabase.instance.client;
+  StorageService();
 
-  // Método automático para subir un archivo al Bucket de Supabase
-  Future<String?> uploadProductImage(File imageFile) async {
-    try {
-      // Generamos un nombre único para el archivo basado en el tiempo actual
-      final String fileName =
-          'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final String path = 'products/$fileName';
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-      // Subimos el archivo físicamente al Bucket llamado 'images'
-      await _supabase.storage
-          .from('images')
-          .upload(
-            path,
-            imageFile,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-          );
+  static const String _productBucket = 'product-images';
 
-      // Obtenemos la URL pública oficial de internet para guardarla en el producto
-      final String publicUrl = _supabase.storage
-          .from('images')
-          .getPublicUrl(path);
-      return publicUrl;
-    } catch (e) {
-      // Devuelve null de forma segura si el Bucket no existe o falla la red
-      return null;
+  Future<String> uploadProductImage(File imageFile) async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw const AuthException('Debes iniciar sesión para subir imágenes.');
+    }
+
+    final extension = _extensionFromPath(imageFile.path);
+    final fileName = '${DateTime.now().microsecondsSinceEpoch}.$extension';
+    final path = '${user.id}/$fileName';
+
+    await _supabase.storage
+        .from(_productBucket)
+        .upload(
+          path,
+          imageFile,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        );
+
+    return _supabase.storage.from(_productBucket).getPublicUrl(path);
+  }
+
+  String _extensionFromPath(String path) {
+    final dotIndex = path.lastIndexOf('.');
+
+    if (dotIndex == -1 || dotIndex == path.length - 1) {
+      return 'jpg';
+    }
+
+    final extension = path.substring(dotIndex + 1).toLowerCase();
+
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'webp':
+        return extension == 'jpeg' ? 'jpg' : extension;
+      default:
+        return 'jpg';
     }
   }
 }

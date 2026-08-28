@@ -55,19 +55,47 @@ class Product {
     'created_at': createdAt.toIso8601String(),
   };
 
-  factory Product.fromJson(Map<String, dynamic> json) => Product(
-    id: json['id'] as String,
-    title: json['title'] as String,
-    description: json['description'] as String? ?? '',
-    images: (json['images'] as List<dynamic>).cast<String>(),
-    price: (json['price'] as num?)?.toDouble(),
-    tradeType: TradeType.values.byName(json['trade_type'] as String),
-    category: json['category'] as String? ?? 'Otros',
-    location: json['location'] as String? ?? '',
-    owner: json['owner'] as String? ?? 'Usuario',
-    ownerId: json['owner_id'] as String?,
-    condition: json['condition'] as String? ?? 'Usado',
-    wanted: json['wanted'] as String? ?? '',
-    createdAt: DateTime.parse(json['created_at'] as String),
-  );
+  factory Product.fromJson(Map<String, dynamic> json) {
+    final rawImages = json['images'];
+    final images = rawImages is List
+        ? rawImages.whereType<String>().toList()
+        : <String>[];
+
+    final rawTradeType = json['trade_type'];
+    final tradeType = rawTradeType is String
+        ? TradeType.values.firstWhere(
+            (value) => value.name == rawTradeType,
+            orElse: () => TradeType.trade,
+          )
+        : TradeType.trade;
+
+    final rawCreatedAt = json['created_at'];
+    final createdAt = rawCreatedAt is String
+        ? DateTime.tryParse(rawCreatedAt) ??
+              DateTime.fromMillisecondsSinceEpoch(0)
+        : DateTime.fromMillisecondsSinceEpoch(0);
+
+    final rawPrice = json['price'];
+    final price = rawPrice is num
+        ? rawPrice.toDouble()
+        : rawPrice is String
+        ? double.tryParse(rawPrice.replaceAll(',', '.'))
+        : null;
+
+    return Product(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      images: images,
+      price: price,
+      tradeType: tradeType,
+      category: json['category']?.toString() ?? 'Otros',
+      location: json['location']?.toString() ?? '',
+      owner: json['owner']?.toString() ?? 'Usuario',
+      ownerId: json['owner_id']?.toString(),
+      condition: json['condition']?.toString() ?? 'Usado',
+      wanted: json['wanted']?.toString() ?? '',
+      createdAt: createdAt,
+    );
+  }
 }
