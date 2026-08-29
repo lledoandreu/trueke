@@ -37,8 +37,10 @@ class ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favorites = ref.watch(favoritesProvider.notifier);
-    final isFavorite = favorites.isFavorite(product);
+    final favoritesState = ref.watch(favoritesProvider);
+    final isFavorite =
+        favoritesState.valueOrNull?.any((item) => item.id == product.id) ??
+        false;
 
     return Card(
       elevation: 2,
