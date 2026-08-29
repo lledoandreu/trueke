@@ -61,4 +61,9 @@ class SupabaseProductRepository implements ProductRepository {
   Future<String> uploadProductImage(XFile file) async {
     return _storageService.uploadProductImage(File(file.path));
   }
+
+  @override
+  Future<void> deleteProductImage(String publicUrl) async {
+    await _storageService.deleteProductImage(publicUrl);
+  }
 }

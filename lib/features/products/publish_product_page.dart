@@ -125,9 +125,11 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       _isSaving = true;
     });
 
+    final uploadedImages = <String>[];
+    var persistenceCompleted = false;
+
     try {
       final existingProduct = widget.product;
-      final uploadedImages = <String>[];
 
       for (final image in _selectedImages) {
         final url = await ref
@@ -167,6 +169,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         await ref.read(productsProvider.notifier).updateProduct(product);
       }
 
+      persistenceCompleted = true;
+
       if (!mounted) {
         return;
       }
@@ -198,6 +202,16 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         const SnackBar(content: Text('Artículo publicado correctamente.')),
       );
     } catch (error) {
+      if (!persistenceCompleted) {
+        for (final url in uploadedImages) {
+          try {
+            await ref.read(productsProvider.notifier).deleteProductImage(url);
+          } catch (_) {
+            // Keep the original publish error as the user-facing failure.
+          }
+        }
+      }
+
       if (!mounted) {
         return;
       }

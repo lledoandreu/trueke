@@ -8,6 +8,8 @@ class StorageService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   static const String _productBucket = 'product-images';
+  static const String _productPublicPath =
+      '/storage/v1/object/public/$_productBucket/';
 
   Future<String> uploadProductImage(File imageFile) async {
     final user = _supabase.auth.currentUser;
@@ -29,6 +31,32 @@ class StorageService {
         );
 
     return _supabase.storage.from(_productBucket).getPublicUrl(path);
+  }
+
+  Future<void> deleteProductImage(String publicUrl) async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw const AuthException('Debes iniciar sesión para eliminar imágenes.');
+    }
+
+    final markerIndex = publicUrl.indexOf(_productPublicPath);
+
+    if (markerIndex == -1) {
+      throw ArgumentError(
+        'La URL no pertenece al bucket de imágenes de productos.',
+      );
+    }
+
+    final path = publicUrl.substring(markerIndex + _productPublicPath.length);
+
+    if (path.isEmpty || !path.startsWith('${user.id}/')) {
+      throw const AuthException(
+        'No puedes eliminar una imagen que no pertenece a tu usuario.',
+      );
+    }
+
+    await _supabase.storage.from(_productBucket).remove([path]);
   }
 
   String _extensionFromPath(String path) {

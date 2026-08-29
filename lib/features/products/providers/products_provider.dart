@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../core/providers/providers.dart';
 import '../../../models/product.dart';
@@ -18,7 +18,11 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
     await repository.createProduct(product);
 
-    state = AsyncData(await repository.getProducts());
+    try {
+      state = AsyncData(await repository.getProducts());
+    } catch (_) {
+      state = AsyncData([...state.valueOrNull ?? <Product>[], product]);
+    }
   }
 
   Future<void> updateProduct(Product product) async {
@@ -26,7 +30,15 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
     await repository.updateProduct(product);
 
-    state = AsyncData(await repository.getProducts());
+    try {
+      state = AsyncData(await repository.getProducts());
+    } catch (_) {
+      final currentProducts = state.valueOrNull ?? <Product>[];
+      final updatedProducts = currentProducts
+          .map((item) => item.id == product.id ? product : item)
+          .toList();
+      state = AsyncData(updatedProducts);
+    }
   }
 
   Future<void> deleteProduct(String id) async {
@@ -47,6 +59,12 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
     debugPrint('SUBIDA IMAGEN OK: $url');
 
     return url;
+  }
+
+  Future<void> deleteProductImage(String publicUrl) async {
+    final repository = ref.read(productRepositoryProvider);
+
+    await repository.deleteProductImage(publicUrl);
   }
 }
 

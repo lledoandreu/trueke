@@ -14,4 +14,6 @@ abstract class ProductRepository {
   Future<void> deleteProduct(String id);
 
   Future<String> uploadProductImage(XFile file);
+
+  Future<void> deleteProductImage(String publicUrl);
 }
