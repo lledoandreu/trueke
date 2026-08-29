@@ -22,6 +22,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
       ref
           .read(chatProvider.notifier)
           .subscribeToConversation(widget.conversationId);
@@ -30,6 +34,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   @override
   void dispose() {
+    ref
+        .read(chatProvider.notifier)
+        .unsubscribeFromConversation(widget.conversationId);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

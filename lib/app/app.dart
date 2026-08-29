@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/theme/app_theme.dart';
@@ -36,9 +37,12 @@ class _AuthGate extends StatelessWidget {
           );
         }
 
-        return AuthService.currentUser == null
-            ? const AuthPage()
-            : const MainShell();
+        final user = AuthService.currentUser;
+        if (user == null) {
+          return const AuthPage();
+        }
+
+        return ProviderScope(key: ValueKey(user.id), child: const MainShell());
       },
     );
   }

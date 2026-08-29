@@ -3,15 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../models/product.dart';
 import '../../../models/trade_offer.dart';
 import '../../auth/auth_service.dart';
-import '../../chat/repositories/chat_repository.dart';
 
 class TradeOfferRepository {
-  TradeOfferRepository({SupabaseClient? client, ChatRepository? chatRepository})
-    : _client = client ?? Supabase.instance.client,
-      _chatRepository = chatRepository ?? ChatRepository();
+  TradeOfferRepository({SupabaseClient? client})
+    : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
-  final ChatRepository _chatRepository;
 
   static const _table = 'trade_offers';
 
@@ -42,27 +39,18 @@ class TradeOfferRepository {
     required String message,
     Product? offeredProduct,
   }) async {
-    final userId = AuthService.currentUserId;
-    if (userId == null) {
+    if (AuthService.currentUserId == null) {
       throw StateError('Debes iniciar sesión para enviar una propuesta.');
     }
 
-    final conversationId = await _chatRepository.startConversation(
-      product: product,
-      message: message,
+    await _client.rpc<String>(
+      'create_trade_offer',
+      params: {
+        'p_product_id': product.id,
+        'p_message': message,
+        'p_offered_product_id': offeredProduct?.id,
+      },
     );
-
-    await _client.from(_table).insert({
-      'product_id': product.id,
-      'product_title': product.title,
-      'from_user_id': userId,
-      'to_user_id': product.ownerId,
-      'conversation_id': conversationId,
-      'message': message,
-      'status': TradeOfferStatus.sent.name,
-      'offered_product_id': offeredProduct?.id,
-      'offered_product_title': offeredProduct?.title,
-    });
   }
 
   Future<TradeOffer> updateStatus({
@@ -82,23 +70,10 @@ class TradeOfferRepository {
       throw StateError('Esta propuesta ya está respondida.');
     }
 
-    await _client
-        .from(_table)
-        .update({'status': status.name})
-        .eq('id', offer.id)
-        .eq('to_user_id', userId);
-
-    final conversationId = offer.conversationId;
-    if (conversationId != null) {
-      final text = status == TradeOfferStatus.accepted
-          ? 'He aceptado tu propuesta de intercambio.'
-          : 'He rechazado tu propuesta de intercambio.';
-
-      await _chatRepository.addMessage(
-        conversationId: conversationId,
-        text: text,
-      );
-    }
+    await _client.rpc<void>(
+      'respond_to_trade_offer',
+      params: {'p_offer_id': offer.id, 'p_status': status.name},
+    );
 
     return offer.copyWith(status: status);
   }

@@ -1,4 +1,20 @@
 -- Align the products table with the Flutter app and protect ownership.
+create table if not exists public.products (
+  id text primary key,
+  title text not null default '',
+  description text not null default '',
+  images text[] not null default '{}',
+  price numeric,
+  trade_type text not null default 'trade',
+  category text not null default 'Otros',
+  location text not null default '',
+  owner text not null default 'Usuario',
+  owner_id uuid references auth.users (id) on delete set null,
+  condition text not null default 'Usado',
+  wanted text not null default '',
+  created_at timestamptz not null default now()
+);
+
 alter table public.products
   add column if not exists images text[] not null default '{}',
   add column if not exists trade_type text not null default 'trade',
