@@ -14,6 +14,7 @@ class TradeOfferRepository {
 
   Future<List<TradeOffer>> getOffers() async {
     final userId = AuthService.currentUserId;
+
     if (userId == null) {
       return [];
     }
@@ -43,7 +44,7 @@ class TradeOfferRepository {
       throw StateError('Debes iniciar sesión para enviar una propuesta.');
     }
 
-    await _client.rpc<String>(
+    await _client.rpc<void>(
       'create_trade_offer',
       params: {
         'p_product_id': product.id,
@@ -57,8 +58,7 @@ class TradeOfferRepository {
     required TradeOffer offer,
     required TradeOfferStatus status,
   }) async {
-    final userId = AuthService.currentUserId;
-    if (userId == null) {
+    if (AuthService.currentUserId == null) {
       throw StateError('Debes iniciar sesión para responder a una propuesta.');
     }
 
@@ -68,6 +68,13 @@ class TradeOfferRepository {
 
     if (!offer.isPending) {
       throw StateError('Esta propuesta ya está respondida.');
+    }
+
+    if (status != TradeOfferStatus.accepted &&
+        status != TradeOfferStatus.rejected) {
+      throw StateError(
+        'Solo se puede aceptar o rechazar una propuesta pendiente.',
+      );
     }
 
     await _client.rpc<void>(

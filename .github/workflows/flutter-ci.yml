@@ -10,20 +10,27 @@ on:
       - master
       - dev
 
+concurrency:
+  group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  build:
-    name: Analizar y Probar App
+  test:
+    name: Analizar, Probar y Validar Supabase
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configurar Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: "17"
+          java-version: '17'
 
       - name: Configurar Flutter
         uses: subosito/flutter-action@v2
@@ -34,7 +41,7 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Formatear código
+      - name: Verificar formato
         run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Analizar código estático
@@ -42,3 +49,44 @@ jobs:
 
       - name: Ejecutar pruebas automatizadas
         run: flutter test
+
+      - name: Configurar Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Iniciar Supabase local
+        run: supabase db start
+
+      - name: Validar migraciones Supabase
+        run: supabase db reset --local --no-seed
+
+      - name: Validar historial local de migraciones
+        run: supabase migration list --local
+
+      - name: Detener Supabase
+        if: always()
+        run: supabase stop
+
+  build-macos:
+    name: Compilar Trueke para macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v5
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Analizar código estático
+        run: flutter analyze
+
+      - name: Compilar aplicación macOS
+        run: flutter build macos --release

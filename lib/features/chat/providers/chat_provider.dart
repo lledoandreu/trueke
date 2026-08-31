@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../models/chat_conversation.dart';
 import '../../../models/chat_message.dart';
 import '../../../models/product.dart';
+import '../../auth/auth_service.dart';
 import '../repositories/chat_repository.dart';
 
 class ChatNotifier extends AsyncNotifier<List<ChatConversation>> {
@@ -13,12 +14,18 @@ class ChatNotifier extends AsyncNotifier<List<ChatConversation>> {
 
   @override
   Future<List<ChatConversation>> build() async {
+    final userId = ref.watch(authUserIdProvider).valueOrNull;
+
     ref.onDispose(() async {
       for (final channel in _channels.values) {
         await _repository.unsubscribe(channel);
       }
       _channels.clear();
     });
+
+    if (userId == null) {
+      return [];
+    }
 
     return _repository.getConversations();
   }

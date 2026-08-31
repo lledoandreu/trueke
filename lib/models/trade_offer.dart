@@ -1,4 +1,4 @@
-enum TradeOfferStatus { sent, accepted, declined }
+enum TradeOfferStatus { sent, accepted, rejected }
 
 class TradeOffer {
   const TradeOffer({
@@ -54,8 +54,10 @@ class TradeOffer {
   }) {
     final fromUserId =
         json['from_user_id'] as String? ?? json['fromUserId'] as String?;
+
     final createdAtRaw =
         json['created_at'] as String? ?? json['createdAt'] as String;
+
     final statusName = json['status'] as String? ?? TradeOfferStatus.sent.name;
 
     return TradeOffer(

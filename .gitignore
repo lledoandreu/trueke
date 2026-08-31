@@ -46,3 +46,6 @@ app.*.map.json
 
 # Continue local configuration
 .continue/
+
+# Supabase CLI local state
+supabase/.temp/

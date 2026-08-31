@@ -1,7 +1,8 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../profile/profile_repository.dart';
 import '../../models/profile.dart';
+import '../profile/profile_repository.dart';
 
 class AuthService {
   AuthService._();
@@ -70,3 +71,11 @@ class AuthService {
     await _client.auth.signOut();
   }
 }
+
+final authUserIdProvider = StreamProvider<String?>((ref) async* {
+  yield AuthService.currentUserId;
+
+  await for (final authState in AuthService.authStateChanges) {
+    yield authState.session?.user.id;
+  }
+});
