@@ -1,0 +1,74 @@
+name: Trueke Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de versión, por ejemplo v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Crear release Trueke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Analizar código
+        run: flutter analyze
+
+      - name: Ejecutar tests
+        run: flutter test
+
+      - name: Verificar formato
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Validar versión
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          CURRENT_VERSION="$(grep '^version:' pubspec.yaml | sed 's/^version: //; s/+.*//')"
+
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "ERROR: tag=$VERSION pero pubspec.yaml=$CURRENT_VERSION"
+            exit 1
+          fi
+
+      - name: Crear tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if git rev-parse "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "El tag $RELEASE_TAG ya existe."
+            exit 1
+          fi
+
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+
+      - name: Crear GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --title "Trueke $RELEASE_TAG" \
+            --generate-notes
