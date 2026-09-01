@@ -96,7 +96,7 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         if (!uploadedImages.contains(url)) uploadedImages.add(url);
       }
 
-      final List<String> allImages = [
+      final allImages = <String>[
         ...(existingProduct?.images ?? <String>[]),
         ...uploadedImages,
       ];
