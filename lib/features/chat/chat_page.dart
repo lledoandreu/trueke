@@ -1,82 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'chat_detail_page.dart';
-import 'providers/chat_provider.dart';
+import 'providers/ai_chat_provider.dart';
 
 class ChatPage extends ConsumerWidget {
   const ChatPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final conversationsAsync = ref.watch(chatProvider);
+    final chatMessages = ref.watch(aiChatProvider);
+    final textController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Chats',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Asistente de Trueques'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            onPressed: () => ref.read(aiChatProvider.notifier).clearChat(),
+          ),
+        ],
       ),
-      body: conversationsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) =>
-            Center(child: Text('Error cargando chats: $error')),
-        data: (conversations) {
-          if (conversations.isEmpty) {
-            return const Center(
-              child: Text('No tienes conversaciones todavía.'),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: conversations.length,
-            separatorBuilder: (_, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final conversation = conversations[index];
-              final messages = conversation.messages;
-              final lastMessage = messages.isEmpty ? null : messages.last;
-
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                leading: CircleAvatar(
-                  radius: 26,
-                  child: Text(
-                    conversation.name.substring(0, 1),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          Expanded(
+            child: chatMessages.isEmpty
+                ? const Center(
+                    child: Text(
+                      '¡Hola! Soy Trueki. ¿En qué puedo ayudarte con tus intercambios hoy?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: chatMessages.length,
+                    itemBuilder: (context, index) {
+                      final message = chatMessages[index];
+
+                      return Align(
+                        alignment: message.isMine
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: message.isMine
+                                ? Colors.blueAccent
+                                : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Text(
+                            message.text,
+                            style: TextStyle(
+                              color: message.isMine
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: textController,
+                    decoration: const InputDecoration(
+                      hintText: 'Pregúntame sobre trueques, tasaciones...',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty) {
+                        ref
+                            .read(aiChatProvider.notifier)
+                            .sendUserMessage(value);
+                        textController.clear();
+                      }
+                    },
                   ),
                 ),
-                title: Text(
-                  conversation.name,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                const SizedBox(width: 8.0),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  color: Colors.blueAccent,
+                  onPressed: () {
+                    final text = textController.text;
+                    if (text.trim().isNotEmpty) {
+                      ref.read(aiChatProvider.notifier).sendUserMessage(text);
+                      textController.clear();
+                    }
+                  },
                 ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    lastMessage?.text ?? conversation.product,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          ChatDetailPage(conversationId: conversation.id),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

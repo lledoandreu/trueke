@@ -1,73 +1,103 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:trueke/models/product.dart';
 
-import '../../../core/providers/providers.dart';
-import '../../../models/product.dart';
+final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
+  () {
+    return ProductsNotifier();
+  },
+);
+
+final myProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+  final productsAsync = ref.watch(productsProvider);
+  final myId = Supabase.instance.client.auth.currentUser?.id;
+  return productsAsync.whenData(
+    (list) => list.where((p) => p.ownerId == myId).toList(),
+  );
+});
 
 class ProductsNotifier extends AsyncNotifier<List<Product>> {
+  final _supabase = Supabase.instance.client;
+
   @override
   Future<List<Product>> build() async {
-    final repository = ref.watch(productRepositoryProvider);
+    return _fetchProducts();
+  }
 
-    return repository.getProducts();
+  Future<List<Product>> _fetchProducts() async {
+    try {
+      final response = await _supabase
+          .from('products')
+          .select()
+          .order('created_at', ascending: false);
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .map((json) => Product.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<void> addProduct(Product product) async {
-    final repository = ref.read(productRepositoryProvider);
-
-    await repository.createProduct(product);
-
+    state = const AsyncValue.loading();
     try {
-      state = AsyncData(await repository.getProducts());
-    } catch (_) {
-      state = AsyncData([...state.valueOrNull ?? <Product>[], product]);
+      await _supabase.from('products').insert(product.toJson());
+      final updated = await _fetchProducts();
+      state = AsyncValue.data(updated);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
     }
   }
 
   Future<void> updateProduct(Product product) async {
-    final repository = ref.read(productRepositoryProvider);
-
-    await repository.updateProduct(product);
-
+    state = const AsyncValue.loading();
     try {
-      state = AsyncData(await repository.getProducts());
-    } catch (_) {
-      final currentProducts = state.valueOrNull ?? <Product>[];
-      final updatedProducts = currentProducts
-          .map((item) => item.id == product.id ? product : item)
-          .toList();
-      state = AsyncData(updatedProducts);
+      await _supabase
+          .from('products')
+          .update(product.toJson())
+          .eq('id', product.id);
+      final updated = await _fetchProducts();
+      state = AsyncValue.data(updated);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<String> uploadProductImage(XFile image) async {
+    try {
+      final file = File(image.path);
+      final fileExt = image.path.split('.').last;
+      final fileName = '${DateTime.now().microsecondsSinceEpoch}.$fileExt';
+      await _supabase.storage.from('products').upload(fileName, file);
+      return _supabase.storage.from('products').getPublicUrl(fileName);
+    } catch (e) {
+      throw Exception('Error al subir imagen: $e');
     }
   }
 
   Future<void> deleteProduct(String id) async {
-    final repository = ref.read(productRepositoryProvider);
-
-    await repository.deleteProduct(id);
-
-    state = AsyncData(await repository.getProducts());
+    state = const AsyncValue.loading();
+    try {
+      await _supabase.from("products").delete().eq("id", id);
+      final updated = await _fetchProducts();
+      state = AsyncValue.data(updated);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
   }
 
-  Future<String> uploadProductImage(XFile file) async {
-    debugPrint('SUBIDA IMAGEN INICIO: ${file.name}');
-
-    final repository = ref.read(productRepositoryProvider);
-
-    final url = await repository.uploadProductImage(file);
-
-    debugPrint('SUBIDA IMAGEN OK: $url');
-
-    return url;
-  }
-
-  Future<void> deleteProductImage(String publicUrl) async {
-    final repository = ref.read(productRepositoryProvider);
-
-    await repository.deleteProductImage(publicUrl);
+  Future<void> deleteProductImage(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      final fileName = uri.pathSegments.last;
+      await _supabase.storage.from('products').remove([fileName]);
+    } catch (_) {}
   }
 }
-
-final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
-  ProductsNotifier.new,
-);

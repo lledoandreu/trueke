@@ -1,60 +1,95 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:trueke/models/trade_offer.dart';
 
-import '../../../models/product.dart';
-import '../../../models/trade_offer.dart';
-import '../../auth/auth_service.dart';
-import '../repositories/trade_offer_repository.dart';
-
-final tradeOfferRepositoryProvider = Provider<TradeOfferRepository>((ref) {
-  return TradeOfferRepository();
-});
+final tradeOffersProvider =
+    AsyncNotifierProvider<TradeOffersNotifier, List<TradeOffer>>(() {
+      return TradeOffersNotifier();
+    });
 
 class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
-  TradeOfferRepository get _repository =>
-      ref.read(tradeOfferRepositoryProvider);
+  final _supabase = Supabase.instance.client;
 
   @override
   Future<List<TradeOffer>> build() async {
-    final userId = ref.watch(authUserIdProvider).valueOrNull;
+    return _fetchOffers();
+  }
 
-    if (userId == null) {
+  Future<List<TradeOffer>> _fetchOffers() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    try {
+      final response = await _supabase
+          .from('trade_offers')
+          .select()
+          .or('from_user_id.eq.$userId,to_user_id.eq.$userId')
+          .order('created_at', ascending: false);
+
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .map(
+            (json) => TradeOffer.fromJson(
+              json as Map<String, dynamic>,
+              currentUserId: userId,
+            ),
+          )
+          .toList();
+    } catch (e) {
       return [];
     }
-
-    return _repository.getOffers();
   }
 
   Future<void> sendOffer({
-    required Product product,
+    required String productId,
+    required String productTitle,
     required String message,
-    Product? offeredProduct,
+    required String toUserId,
+    String? offeredProductId,
+    String? offeredProductTitle,
   }) async {
-    await _repository.sendOffer(
-      product: product,
-      message: message,
-      offeredProduct: offeredProduct,
-    );
+    state = const AsyncValue.loading();
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Usuario no autenticado');
 
-    state = AsyncData(await _repository.getOffers());
+      await _supabase.from('trade_offers').insert({
+        'product_id': productId,
+        'product_title': productTitle,
+        'message': message,
+        'from_user_id': userId,
+        'to_user_id': toUserId,
+        'status': TradeOfferStatus.sent.name,
+        'offered_product_id': offeredProductId,
+        'offered_product_title': offeredProductTitle,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      final updatedOffers = await _fetchOffers();
+      state = AsyncValue.data(updatedOffers);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> respondToOffer({
     required TradeOffer offer,
     required TradeOfferStatus status,
   }) async {
-    await _repository.updateStatus(offer: offer, status: status);
+    state = const AsyncValue.loading();
+    try {
+      await _supabase
+          .from('trade_offers')
+          .update({'status': status.name})
+          .eq('id', offer.id);
 
-    state = AsyncData(await _repository.getOffers());
-  }
-
-  Future<void> refreshOffers() async {
-    state = const AsyncLoading();
-
-    state = await AsyncValue.guard(_repository.getOffers);
+      final updatedOffers = await _fetchOffers();
+      state = AsyncValue.data(updatedOffers);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
   }
 }
-
-final tradeOffersProvider =
-    AsyncNotifierProvider<TradeOffersNotifier, List<TradeOffer>>(
-      TradeOffersNotifier.new,
-    );

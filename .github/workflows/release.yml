@@ -1,12 +1,9 @@
 name: Trueke Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag de versión, por ejemplo v1.0.0"
-        required: true
-        type: string
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -41,34 +38,20 @@ jobs:
         run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Validar versión
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
+          RELEASE_TAG="${{ github.ref_name }}"
           VERSION="${RELEASE_TAG#v}"
           CURRENT_VERSION="$(grep '^version:' pubspec.yaml | sed 's/^version: //; s/+.*//')"
 
           if [ "$VERSION" != "$CURRENT_VERSION" ]; then
-            echo "ERROR: tag=$VERSION pero pubspec.yaml=$CURRENT_VERSION"
+            echo "ERROR: El tag lanzado ($VERSION) no coincide con la versión de pubspec.yaml ($CURRENT_VERSION)"
             exit 1
           fi
-
-      - name: Crear tag
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
-        run: |
-          if git rev-parse "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "El tag $RELEASE_TAG ya existe."
-            exit 1
-          fi
-
-          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
-          git push origin "$RELEASE_TAG"
 
       - name: Crear GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$RELEASE_TAG" \
-            --title "Trueke $RELEASE_TAG" \
+          gh release create "${{ github.ref_name }}" \
+            --title "Trueke ${{ github.ref_name }}" \
             --generate-notes

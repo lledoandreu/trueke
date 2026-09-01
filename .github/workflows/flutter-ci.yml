@@ -3,7 +3,7 @@ name: Flutter CI Pipeline
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: '17'
+          java-version: "17"
 
       - name: Configurar Flutter
         uses: subosito/flutter-action@v2
@@ -51,7 +51,7 @@ jobs:
         run: flutter test
 
       - name: Configurar Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: latest
 
@@ -63,6 +63,9 @@ jobs:
 
       - name: Validar historial local de migraciones
         run: supabase migration list --local
+
+      - name: Ejecutar pruebas de seguridad de Base de Datos
+        run: supabase test db
 
       - name: Detener Supabase
         if: always()

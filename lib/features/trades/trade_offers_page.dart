@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../models/trade_offer.dart';
-import 'providers/trade_offers_provider.dart';
+import 'package:trueke/models/trade_offer.dart';
+import 'package:trueke/features/trades/providers/trade_offers_provider.dart';
 
 class TradeOffersPage extends ConsumerWidget {
   const TradeOffersPage({super.key});
@@ -18,9 +17,7 @@ class TradeOffersPage extends ConsumerWidget {
           .read(tradeOffersProvider.notifier)
           .respondToOffer(offer: offer, status: status);
 
-      if (!context.mounted) {
-        return;
-      }
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -32,9 +29,7 @@ class TradeOffersPage extends ConsumerWidget {
         ),
       );
     } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se ha podido actualizar la oferta. $error')),
@@ -84,7 +79,7 @@ class TradeOffersPage extends ConsumerWidget {
               ),
             ),
           ),
-          data: (offers) => TabBarView(
+          data: (List<TradeOffer> offers) => TabBarView(
             children: [
               _OffersList(
                 offers: offers.where((offer) => offer.isIncoming).toList(),
@@ -121,7 +116,6 @@ class _OffersList extends StatelessWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final offer = offers[index];
-
         return _OfferCard(offer: offer, onRespond: onRespond);
       },
     );
@@ -174,7 +168,7 @@ class _OfferCard extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    'Oferta #${offer.id.substring(0, 8)}',
+                    'Oferta #${offer.id.length > 8 ? offer.id.substring(0, 8) : offer.id}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,
@@ -187,7 +181,7 @@ class _OfferCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor().withValues(alpha: 0.1),
+                    color: _statusColor().withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -195,50 +189,49 @@ class _OfferCard extends StatelessWidget {
                     style: TextStyle(
                       color: _statusColor(),
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
                     ),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 24),
+            const SizedBox(height: 12),
             Text(
-              offer.productTitle,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              'Producto: ${offer.productTitle}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 8),
-            Text(offer.message),
             if (offer.offeredProductTitle != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               Text(
-                'Ofrece: ${offer.offeredProductTitle}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                'A cambio de: ${offer.offeredProductTitle}',
+                style: const TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
+            const SizedBox(height: 8),
+            Text(offer.message, style: const TextStyle(color: Colors.black87)),
             if (canRespond) ...[
-              const Divider(height: 24),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton.icon(
+                  OutlinedButton(
                     onPressed: () =>
                         onRespond!(offer, TradeOfferStatus.rejected),
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    label: const Text(
-                      'Rechazar',
-                      style: TextStyle(color: Colors.red),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
                     ),
+                    child: const Text('Rechazar'),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton.icon(
+                  FilledButton(
                     onPressed: () =>
                         onRespond!(offer, TradeOfferStatus.accepted),
-                    style: ElevatedButton.styleFrom(
+                    style: FilledButton.styleFrom(
                       backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
                     ),
-                    icon: const Icon(Icons.check),
-                    label: const Text('Aceptar'),
+                    child: const Text('Aceptar'),
                   ),
                 ],
               ),

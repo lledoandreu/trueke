@@ -1,37 +1,60 @@
 -- Security expectations for the exposed database API.
--- These assertions are intended to be run with `supabase test db` in the
--- project's linked/local database environment.
+-- These assertions are intended to be run with `supabase test db`.
 
 begin;
 
-select has_function_privilege(
-  'anon',
-  'public.create_trade_offer(text,text,text)',
-  'execute'
-) = false as create_trade_offer_not_public;
+select plan(5);
 
-select has_function_privilege(
-  'authenticated',
-  'public.create_trade_offer(text,text,text)',
-  'execute'
-) = true as create_trade_offer_for_authenticated;
+select is(
+  has_function_privilege(
+    'anon',
+    'public.create_trade_offer(text,text,text)',
+    'execute'
+  ),
+  false,
+  'anon cannot execute create_trade_offer'
+);
 
-select has_table_privilege(
-  'authenticated',
-  'public.trade_offers',
-  'INSERT'
-) = false as trade_offers_insert_not_direct;
+select is(
+  has_function_privilege(
+    'authenticated',
+    'public.create_trade_offer(text,text,text)',
+    'execute'
+  ),
+  false,
+  'authenticated cannot execute create_trade_offer directly'
+);
 
-select has_table_privilege(
-  'authenticated',
-  'public.trade_offers',
-  'SELECT'
-) = true as trade_offers_select_allowed;
+select is(
+  has_table_privilege(
+    'authenticated',
+    'public.trade_offers',
+    'INSERT'
+  ),
+  false,
+  'authenticated cannot insert directly into trade_offers'
+);
 
-select has_table_privilege(
-  'anon',
-  'public.profiles',
-  'SELECT'
-) = false as profiles_not_public;
+select is(
+  has_table_privilege(
+    'authenticated',
+    'public.trade_offers',
+    'SELECT'
+  ),
+  true,
+  'authenticated can select trade_offers'
+);
+
+select is(
+  has_table_privilege(
+    'anon',
+    'public.profiles',
+    'SELECT'
+  ),
+  false,
+  'anon cannot select profiles'
+);
+
+select * from finish();
 
 rollback;

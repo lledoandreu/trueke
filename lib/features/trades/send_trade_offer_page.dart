@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../models/product.dart';
-import '../auth/auth_service.dart';
-import '../chat/providers/chat_provider.dart';
-import '../products/providers/products_provider.dart';
-import 'providers/trade_offers_provider.dart';
+import 'package:trueke/models/product.dart';
+import 'package:trueke/features/auth/auth_service.dart';
+import 'package:trueke/features/products/providers/products_provider.dart';
+import 'package:trueke/features/trades/providers/trade_offers_provider.dart';
 
 class SendTradeOfferPage extends ConsumerStatefulWidget {
   const SendTradeOfferPage({super.key, required this.product});
@@ -17,19 +15,9 @@ class SendTradeOfferPage extends ConsumerStatefulWidget {
 }
 
 class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
-  late final TextEditingController _messageController;
-  bool _isSending = false;
-  Product? _offeredProduct;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _messageController = TextEditingController(
-      text:
-          'Hola ${widget.product.owner}, me interesa tu artículo. ¿Hablamos de un posible intercambio?',
-    );
-  }
+  final _messageController = TextEditingController();
+  Product? _selectedMyProduct;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -37,160 +25,150 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
     super.dispose();
   }
 
-  Future<void> _send() async {
-    final message = _messageController.text.trim();
-
-    if (message.isEmpty || _isSending) {
-      return;
-    }
-
-    final currentUserId = AuthService.currentUserId;
-
-    if (currentUserId == null) {
+  Future<void> _submitOffer() async {
+    if (_messageController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Inicia sesión para enviar una propuesta.'),
+          content: Text('Por favor, introduce un mensaje para tu propuesta.'),
         ),
       );
       return;
     }
 
-    if (widget.product.ownerId == currentUserId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No puedes proponer un intercambio sobre tu anuncio.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSending = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       await ref
           .read(tradeOffersProvider.notifier)
           .sendOffer(
-            product: widget.product,
-            message: message,
-            offeredProduct: _offeredProduct,
+            productId: widget.product.id,
+            productTitle: widget.product.title,
+            message: _messageController.text.trim(),
+            toUserId: widget.product.ownerId ?? '',
+            offeredProductId: _selectedMyProduct?.id,
+            offeredProductTitle: _selectedMyProduct?.title,
           );
 
-      ref.invalidate(chatProvider);
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Propuesta de trueque enviada con éxito!'),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Propuesta enviada.')));
-
-      Navigator.pop(context);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se ha podido enviar la propuesta. $error')),
-      );
+      ).showSnackBar(SnackBar(content: Text('Error al enviar la oferta: $e')));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final myListings =
-        ref
-            .watch(productsProvider)
-            .valueOrNull
-            ?.where((product) => product.ownerId == AuthService.currentUserId)
-            .toList() ??
-        const <Product>[];
+    final productsAsync = ref.watch(productsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Proponer intercambio')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.product.title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text('Propuesta para ${widget.product.owner}'),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _messageController,
-              minLines: 4,
-              maxLines: 6,
-              enabled: !_isSending,
-              decoration: const InputDecoration(
-                labelText: 'Mensaje',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '¿Qué ofreces a cambio?',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            if (myListings.isEmpty)
-              const Text(
-                'Publica un anuncio para incluirlo en la propuesta. También puedes enviar solo el mensaje.',
-              )
-            else
-              Expanded(
-                child: ListView.separated(
-                  itemCount: myListings.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final listing = myListings[index];
-                    final selected = _offeredProduct?.id == listing.id;
+      appBar: AppBar(
+        title: const Text(
+          'Proponer Trueque',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text(
+                  'Estás proponiendo un intercambio por:',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.product.title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+                const Divider(height: 32),
+                const Text(
+                  '¿Qué artículo de tu propiedad ofreces a cambio?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                productsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, _) =>
+                      Text('Error al cargar tus productos: $err'),
+                  data: (products) {
+                    final myId = AuthService.currentUserId;
+                    final myProducts = products
+                        .where((p) => p.ownerId == myId)
+                        .toList();
 
-                    return ChoiceChip(
-                      selected: selected,
-                      label: Text(listing.title),
-                      onSelected: _isSending
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _offeredProduct = value ? listing : null;
-                              });
-                            },
+                    if (myProducts.isEmpty) {
+                      return const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'No tienes artículos publicados para ofrecer. Puedes proponer un trueque abierto.',
+                          ),
+                        ),
+                      );
+                    }
+                    return DropdownButtonFormField<Product>(
+                      initialValue: _selectedMyProduct,
+                      hint: const Text(
+                        'Selecciona uno de tus artículos (Opcional)',
+                      ),
+                      isExpanded: true,
+                      items: myProducts.map((prod) {
+                        return DropdownMenuItem<Product>(
+                          value: prod,
+                          child: Text(prod.title),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedMyProduct = val);
+                      },
                     );
                   },
                 ),
-              ),
-            if (myListings.isEmpty) const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _isSending ? null : _send,
-                icon: _isSending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send_outlined),
-                label: Text(_isSending ? 'Enviando...' : 'Enviar propuesta'),
-              ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Escribe un mensaje explicando tu propuesta:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _messageController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Ej: Hola, te cambio mi artículo por el tuyo y puedo aportar la diferencia si te interesa...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                FilledButton.icon(
+                  onPressed: _submitOffer,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                  icon: const Icon(Icons.send_rounded),
+                  label: const Text(
+                    'Enviar Propuesta Oficial',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
     );
   }
 }
