@@ -1,6 +1,7 @@
 name: Flutter CI Pipeline
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
@@ -53,7 +54,7 @@ jobs:
       - name: Configurar Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.116.0
 
       - name: Iniciar Supabase local
         run: supabase db start

@@ -27,8 +27,13 @@ del proyecto.
 5. Mantener las funcionalidades existentes.
 6. No introducir dependencias innecesarias.
 7. Usar `dart format` después de modificar Dart.
-8. Ejecutar siempre:
+8. Ejecutar siempre el verificador local (formato, analyzer y tests):
 
+   bash scripts/verify.sh
+
+   Equivalente mínimo si no se usa el script:
+
+   dart format --output=none --set-exit-if-changed lib test
    flutter analyze
    flutter test
 

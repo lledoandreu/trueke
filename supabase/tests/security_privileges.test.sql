@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(5);
+select plan(7);
 
 select is(
   has_function_privilege(
@@ -17,12 +17,32 @@ select is(
 
 select is(
   has_function_privilege(
+    'anon',
+    'public.respond_to_trade_offer(uuid,text)',
+    'execute'
+  ),
+  false,
+  'anon cannot execute respond_to_trade_offer'
+);
+
+select is(
+  has_function_privilege(
     'authenticated',
     'public.create_trade_offer(text,text,text)',
     'execute'
   ),
-  false,
-  'authenticated cannot execute create_trade_offer directly'
+  true,
+  'authenticated can execute create_trade_offer'
+);
+
+select is(
+  has_function_privilege(
+    'authenticated',
+    'public.respond_to_trade_offer(uuid,text)',
+    'execute'
+  ),
+  true,
+  'authenticated can execute respond_to_trade_offer'
 );
 
 select is(
