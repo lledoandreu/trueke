@@ -16,6 +16,7 @@ class ChatDetailPage extends ConsumerStatefulWidget {
 class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  bool _sendingMessage = false;
 
   @override
   void initState() {
@@ -49,12 +50,40 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       return;
     }
 
-    await ref
-        .read(chatProvider.notifier)
-        .addMessage(conversationId: widget.conversationId, text: text);
+    if (_sendingMessage) {
+      return;
+    }
 
-    _messageController.clear();
-    _scrollToBottom();
+    setState(() {
+      _sendingMessage = true;
+    });
+
+    try {
+      await ref
+          .read(chatProvider.notifier)
+          .addMessage(conversationId: widget.conversationId, text: text);
+
+      if (!mounted) {
+        return;
+      }
+
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo enviar el mensaje.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingMessage = false;
+        });
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -133,6 +162,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                         child: TextField(
                           controller: _messageController,
                           textInputAction: TextInputAction.send,
+                          enabled: !_sendingMessage,
                           onSubmitted: (_) => _sendMessage(),
                           decoration: InputDecoration(
                             hintText: 'Escribe un mensaje...',
@@ -148,8 +178,17 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                       ),
                       const SizedBox(width: 8),
                       IconButton.filled(
-                        onPressed: _sendMessage,
-                        icon: const Icon(Icons.send),
+                        onPressed: _sendingMessage ? null : _sendMessage,
+                        icon: _sendingMessage
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.send),
                       ),
                     ],
                   ),
