@@ -36,8 +36,8 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
             ),
           )
           .toList();
-    } catch (e) {
-      return [];
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(error, stackTrace);
     }
   }
 

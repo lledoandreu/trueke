@@ -39,8 +39,8 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
       return data
           .map((json) => Product.fromJson(json as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      return [];
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(error, stackTrace);
     }
   }
 
