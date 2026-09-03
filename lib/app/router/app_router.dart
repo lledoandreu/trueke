@@ -18,7 +18,10 @@ class AppRouter {
         return MaterialPageRoute<void>(builder: (_) => const HomePage());
 
       case AppRoutes.product:
-        final product = settings.arguments as Product;
+        final product = settings.arguments;
+        if (product is! Product) {
+          return _notFoundRoute();
+        }
         return MaterialPageRoute<void>(
           builder: (_) => ProductDetailPage(product: product),
         );
@@ -30,7 +33,10 @@ class AppRouter {
         return MaterialPageRoute<void>(builder: (_) => const TradeOffersPage());
 
       case AppRoutes.sendTradeOffer:
-        final product = settings.arguments as Product;
+        final product = settings.arguments;
+        if (product is! Product) {
+          return _notFoundRoute();
+        }
         return MaterialPageRoute<void>(
           builder: (_) => SendTradeOfferPage(product: product),
         );
@@ -42,12 +48,16 @@ class AppRouter {
         );
 
       default:
-        return MaterialPageRoute<void>(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text('Página no encontrada')),
-            body: const Center(child: Text('404')),
-          ),
-        );
+        return _notFoundRoute();
     }
+  }
+
+  static Route<void> _notFoundRoute() {
+    return MaterialPageRoute<void>(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Página no encontrada')),
+        body: const Center(child: Text('404')),
+      ),
+    );
   }
 }
