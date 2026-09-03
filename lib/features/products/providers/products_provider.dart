@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../core/services/storage_service.dart';
 import 'package:trueke/models/product.dart';
 
 final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
@@ -71,11 +73,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
   Future<String> uploadProductImage(XFile image) async {
     try {
-      final file = File(image.path);
-      final fileExt = image.path.split('.').last;
-      final fileName = '${DateTime.now().microsecondsSinceEpoch}.$fileExt';
-      await _supabase.storage.from('products').upload(fileName, file);
-      return _supabase.storage.from('products').getPublicUrl(fileName);
+      return await StorageService().uploadProductImage(File(image.path));
     } catch (e) {
       throw Exception('Error al subir imagen: $e');
     }
@@ -94,10 +92,6 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 
   Future<void> deleteProductImage(String url) async {
-    try {
-      final uri = Uri.parse(url);
-      final fileName = uri.pathSegments.last;
-      await _supabase.storage.from('products').remove([fileName]);
-    } catch (_) {}
+    await StorageService().deleteProductImage(url);
   }
 }

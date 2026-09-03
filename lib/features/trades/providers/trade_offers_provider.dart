@@ -54,17 +54,14 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Usuario no autenticado');
 
-      await _supabase.from('trade_offers').insert({
-        'product_id': productId,
-        'product_title': productTitle,
-        'message': message,
-        'from_user_id': userId,
-        'to_user_id': toUserId,
-        'status': TradeOfferStatus.sent.name,
-        'offered_product_id': offeredProductId,
-        'offered_product_title': offeredProductTitle,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      await _supabase.rpc<dynamic>(
+        'create_trade_offer',
+        params: {
+          'p_product_id': productId,
+          'p_message': message,
+          'p_offered_product_id': offeredProductId,
+        },
+      );
 
       final updatedOffers = await _fetchOffers();
       state = AsyncValue.data(updatedOffers);
@@ -80,10 +77,10 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      await _supabase
-          .from('trade_offers')
-          .update({'status': status.name})
-          .eq('id', offer.id);
+      await _supabase.rpc<dynamic>(
+        'respond_to_trade_offer',
+        params: {'p_offer_id': offer.id, 'p_status': status.name},
+      );
 
       final updatedOffers = await _fetchOffers();
       state = AsyncValue.data(updatedOffers);
