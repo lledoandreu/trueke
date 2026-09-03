@@ -2,13 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/ai_chat_provider.dart';
 
-class ChatPage extends ConsumerWidget {
+class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends ConsumerState<ChatPage> {
+  final TextEditingController _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final chatMessages = ref.watch(aiChatProvider);
-    final textController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +82,7 @@ class ChatPage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: textController,
+                    controller: _textController,
                     decoration: const InputDecoration(
                       hintText: 'Pregúntame sobre trueques, tasaciones...',
                       border: OutlineInputBorder(),
@@ -80,7 +92,7 @@ class ChatPage extends ConsumerWidget {
                         ref
                             .read(aiChatProvider.notifier)
                             .sendUserMessage(value);
-                        textController.clear();
+                        _textController.clear();
                       }
                     },
                   ),
@@ -90,10 +102,10 @@ class ChatPage extends ConsumerWidget {
                   icon: const Icon(Icons.send),
                   color: Colors.blueAccent,
                   onPressed: () {
-                    final text = textController.text;
+                    final text = _textController.text;
                     if (text.trim().isNotEmpty) {
                       ref.read(aiChatProvider.notifier).sendUserMessage(text);
-                      textController.clear();
+                      _textController.clear();
                     }
                   },
                 ),
