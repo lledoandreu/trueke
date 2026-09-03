@@ -1,9 +1,52 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/models/product.dart';
 import 'package:trueke/features/products/providers/products_provider.dart';
+
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({required this.image, required this.onRemove});
+
+  final ImageProvider image;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image(
+              image: image,
+              width: 96,
+              height: 96,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.close),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black54,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(28, 28),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class PublishProductPage extends ConsumerStatefulWidget {
   const PublishProductPage({super.key, this.product});
@@ -37,6 +80,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   TradeType _tradeType = TradeType.trade;
   bool _isSaving = false;
   final List<XFile> _selectedImages = [];
+  final List<String> _existingImages = [];
+  final List<String> _removedImages = [];
 
   @override
   void initState() {
@@ -51,6 +96,7 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     );
 
     if (product != null) {
+      _existingImages.addAll(product.images);
       _category = product.category;
       _condition = product.condition;
       _tradeType = product.tradeType;
@@ -73,11 +119,26 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     if (!mounted) return;
     if (images.isNotEmpty) {
       setState(() {
-        _selectedImages
-          ..clear()
-          ..addAll(images);
+        for (final image in images) {
+          if (!_selectedImages.any((selected) => selected.path == image.path)) {
+            _selectedImages.add(image);
+          }
+        }
       });
     }
+  }
+
+  void _removeExistingImage(String url) {
+    setState(() {
+      _existingImages.remove(url);
+      if (!_removedImages.contains(url)) {
+        _removedImages.add(url);
+      }
+    });
+  }
+
+  void _removeSelectedImage(XFile image) {
+    setState(() => _selectedImages.remove(image));
   }
 
   Future<void> _publish() async {
@@ -107,10 +168,7 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         if (!uploadedImages.contains(url)) uploadedImages.add(url);
       }
 
-      final allImages = <String>[
-        ...(existingProduct?.images ?? <String>[]),
-        ...uploadedImages,
-      ];
+      final allImages = <String>[..._existingImages, ...uploadedImages];
       final product = Product(
         id:
             existingProduct?.id ??
@@ -135,6 +193,15 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         await ref.read(productsProvider.notifier).updateProduct(product);
       }
       persistenceCompleted = true;
+
+      for (final url in _removedImages) {
+        try {
+          await ref.read(productsProvider.notifier).deleteProductImage(url);
+        } catch (_) {
+          // La publicación ya se ha guardado; la imagen puede limpiarse después.
+        }
+      }
+
       if (!mounted) return;
       Navigator.pop(context);
     } catch (error) {
@@ -280,6 +347,28 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                           v == null || v.trim().isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 24),
+                    if (_existingImages.isNotEmpty ||
+                        _selectedImages.isNotEmpty) ...[
+                      SizedBox(
+                        height: 104,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            for (final url in _existingImages)
+                              _ImagePreview(
+                                image: NetworkImage(url),
+                                onRemove: () => _removeExistingImage(url),
+                              ),
+                            for (final image in _selectedImages)
+                              _ImagePreview(
+                                image: FileImage(File(image.path)),
+                                onRemove: () => _removeSelectedImage(image),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     OutlinedButton.icon(
                       onPressed: _pickImages,
                       icon: const Icon(Icons.photo_library_outlined),
