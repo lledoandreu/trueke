@@ -21,6 +21,17 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   late final TextEditingController _locationController;
   late final TextEditingController _priceController;
 
+  static const _categories = [
+    'Electrónica',
+    'Moda',
+    'Hogar',
+    'Gaming',
+    'Deporte',
+    'Otros',
+  ];
+
+  static const _conditions = ['Nueva', 'Como nuevo', 'Buen estado', 'Usado'];
+
   String _category = 'Electrónica';
   String _condition = 'Buen estado';
   TradeType _tradeType = TradeType.trade;
@@ -74,10 +85,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     final price = double.tryParse(
       _priceController.text.trim().replaceAll(',', '.'),
     );
-    if (_tradeType != TradeType.trade && price == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Precio no válido')));
+    if (_tradeType != TradeType.trade && (price == null || price <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Introduce un precio mayor que cero.')),
+      );
       return;
     }
     final currentUserId = AuthService.currentUserId;
@@ -132,6 +143,12 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
           await ref.read(productsProvider.notifier).deleteProductImage(url);
         }
       }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar el anuncio: $error')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -170,6 +187,54 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                           v == null || v.trim().isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _categories.contains(_category)
+                          ? _category
+                          : 'Otros',
+                      decoration: const InputDecoration(labelText: 'Categoría'),
+                      items: _categories
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _category = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _conditions.contains(_condition)
+                          ? _condition
+                          : 'Usado',
+                      decoration: const InputDecoration(labelText: 'Estado'),
+                      items: _conditions
+                          .map(
+                            (condition) => DropdownMenuItem(
+                              value: condition,
+                              child: Text(condition),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _condition = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _wantedController,
+                      decoration: const InputDecoration(
+                        labelText: '¿Qué buscas?',
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<TradeType>(
                       initialValue: _tradeType,
                       decoration: const InputDecoration(
@@ -192,6 +257,19 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                           labelText: 'Precio estimado (€)',
                         ),
                         keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (_tradeType == TradeType.trade) {
+                            return null;
+                          }
+
+                          final parsed = double.tryParse(
+                            (value ?? '').trim().replaceAll(',', '.'),
+                          );
+
+                          return parsed == null || parsed <= 0
+                              ? 'Introduce un precio mayor que cero'
+                              : null;
+                        },
                       ),
                     ],
                     const SizedBox(height: 12),
