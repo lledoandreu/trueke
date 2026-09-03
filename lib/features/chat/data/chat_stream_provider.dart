@@ -17,16 +17,26 @@ final chatMessagesStreamProvider =
     });
 
 // Proveedor automático para la acción de enviar mensajes nuevos
-final chatSendProvider = Provider((ref) {
+final chatSendProvider = Provider<Future<void> Function(String, String)>((ref) {
   final supabase = Supabase.instance.client;
 
   return (String conversationId, String text) async {
-    if (text.trim().isEmpty) return;
+    final userId = supabase.auth.currentUser?.id;
+
+    if (userId == null) {
+      throw StateError('Debes iniciar sesión para enviar un mensaje.');
+    }
+
+    final cleanText = text.trim();
+
+    if (cleanText.isEmpty) {
+      return;
+    }
 
     await supabase.from('messages').insert({
       'conversation_id': conversationId,
-      'sender_id': supabase.auth.currentUser?.id,
-      'text': text.trim(),
+      'sender_id': userId,
+      'text': cleanText,
     });
   };
 });
