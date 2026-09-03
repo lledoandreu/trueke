@@ -52,16 +52,25 @@ class ProfilePage extends ConsumerWidget {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-                      child: Text(
-                        nameLabel.isNotEmpty
-                            ? nameLabel.substring(0, 1).toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
+                      backgroundImage:
+                          profile.avatarUrl != null &&
+                              profile.avatarUrl!.isNotEmpty
+                          ? NetworkImage(profile.avatarUrl!)
+                          : null,
+                      child:
+                          profile.avatarUrl == null ||
+                              profile.avatarUrl!.isEmpty
+                          ? Text(
+                              nameLabel.isNotEmpty
+                                  ? nameLabel.substring(0, 1).toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     Text(
