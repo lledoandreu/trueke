@@ -1,54 +1,39 @@
-import 'package:dart_openai/dart_openai.dart';
 import '../../../models/chat_message.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AiChatRepository {
-  void initialize(String apiKey) {
-    OpenAI.apiKey = apiKey;
-  }
+  AiChatRepository([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
+
+  final SupabaseClient _client;
 
   Future<String> sendMessageToAgent({
     required List<ChatMessage> history,
-    String? systemInstructions,
   }) async {
     try {
-      final messages = <OpenAIChatCompletionChoiceMessageModel>[];
-
-      if (systemInstructions != null) {
-        messages.add(
-          OpenAIChatCompletionChoiceMessageModel(
-            role: OpenAIChatMessageRole.system,
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                systemInstructions,
-              ),
-            ],
-          ),
-        );
-      }
-
-      for (final msg in history) {
-        messages.add(
-          OpenAIChatCompletionChoiceMessageModel(
-            role: msg.isMine
-                ? OpenAIChatMessageRole.user
-                : OpenAIChatMessageRole.assistant,
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(msg.text),
-            ],
-          ),
-        );
-      }
-
-      final chatCompletion = await OpenAI.instance.chat.create(
-        model: "gpt-4o-mini",
-        messages: messages,
-        temperature: 0.7,
+      final response = await _client.functions.invoke(
+        'ai-chat',
+        body: {
+          'messages': [
+            for (final message in history)
+              {
+                'role': message.isMine ? 'user' : 'assistant',
+                'content': message.text,
+              },
+          ],
+        },
       );
 
-      return chatCompletion.choices.first.message.content?.first.text ??
-          "Lo siento, no he podido procesar tu solicitud.";
-    } catch (e) {
-      return "Error de conexión con el Agente: $e";
+      final data = response.data;
+      if (data is Map && data['message'] is String) {
+        return data['message'] as String;
+      }
+
+      return 'Lo siento, no he podido procesar tu solicitud.';
+    } on FunctionException {
+      return 'Error de conexión con el asistente.';
+    } catch (_) {
+      return 'No se pudo conectar con el asistente.';
     }
   }
 }

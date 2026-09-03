@@ -16,18 +16,7 @@ class AiChatNotifier extends StateNotifier<List<ChatMessage>> {
   final AiChatRepository _repository;
   final _supabase = Supabase.instance.client;
 
-  AiChatNotifier(this._repository) : super([]) {
-    const apiKey = String.fromEnvironment(
-      'OPENAI_API_KEY',
-      defaultValue: 'TU_OPENAI_API_KEY_TEMPORAL',
-    );
-    _repository.initialize(apiKey);
-  }
-
-  final String _systemInstructions =
-      "Eres Trueki, el asistente inteligente de la app Trueke. "
-      "Tu objetivo es ayudar a los usuarios a negociar de forma justa, tasar productos y "
-      "sugerir intercambios equitativos. Sé amable, dinámico y conciso.";
+  AiChatNotifier(this._repository) : super([]);
 
   Future<void> sendUserMessage(String text) async {
     if (text.trim().isEmpty) return;
@@ -47,7 +36,6 @@ class AiChatNotifier extends StateNotifier<List<ChatMessage>> {
 
     final botResponseText = await _repository.sendMessageToAgent(
       history: state,
-      systemInstructions: _systemInstructions,
     );
 
     final botTimestamp = DateTime.now();

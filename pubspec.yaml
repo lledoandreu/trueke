@@ -16,7 +16,6 @@ dependencies:
   shared_preferences: ^2.5.5
   supabase_flutter: ^2.17.1
   image_picker: ^1.2.3
-  dart_openai: ^8.0.0
 
 dev_dependencies:
   flutter_test:
