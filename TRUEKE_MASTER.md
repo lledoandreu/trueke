@@ -1,9 +1,9 @@
 # TRUEKE — DOCUMENTO MAESTRO DE MIGRACIÓN Y CONTINUIDAD
 
-**Fecha de referencia:** 2 de septiembre de 2026
+**Fecha de referencia:** 3 de septiembre de 2026
 **Repositorio:** lledoandreu84/Trueke
 **Branch principal:** main
-**Commit de referencia actual:** 82bbea5a9cd590d8e8745dbb70b8110550402d5d
+**Commit de referencia actual:** c0349d5 (refactor: auditoría completa, unificación de chat provider, storage service y product detail page)
 
 ## 1. OBJETIVO DEL PROYECTO
 Trueke es una plataforma de compraventa e intercambio de productos, concebida funcionalmente como una alternativa tipo Wallapop, pero con especial importancia en el intercambio/trueque entre usuarios.
@@ -43,14 +43,15 @@ Organizada por funcionalidades (features):
 
 ## 5. ESTADO DE LAS FUNCIONALIDADES (AUDITORÍA)
 - **Auth:** Implementado vía Supabase Auth. Eliminados duplicados antiguos.
-- **Productos:** Catálogo, detalle y publicación funcionales. Storage configurado con limpieza automática.
+- **Productos:** Catálogo, detalle modular (`ProductDetailPage` con slivers y widgets dedicados) y publicación funcionales. Storage centralizado (`StorageService`) con soporte para productos y avatares.
 - **Favoritos:** Reactivos con Riverpod y persistencia local.
-- **Chat:** Conversaciones y mensajes Realtime operativos.
+- **Chat:** Conversaciones y mensajes Realtime unificados con Supabase Streams (`chatMessagesStreamProvider` con autoDispose) y repositorio desacoplado.
 - **Trades:** Sistema de propuestas mediante RPC (`create_trade_offer`, `respond_to_trade_offer`) con validaciones en base de datos.
 - **CI/CD:** GitHub Actions configurado para validación y releases.
 
 ## 6. PRÓXIMOS PASOS (ROADMAP)
-1. **BLOQUE B (Marketplace):** Refinar filtros, edición/eliminación de productos.
+1. **BLOQUE CHAT (Prioridad Inmediata):** Implementar en `ChatPage` la bandeja de conversaciones dual (Pestaña "Mensajes" reactiva entre usuarios + Acceso al Asistente Trueki IA).
+2. **BLOQUE B (Marketplace):** Refinar filtros, edición/eliminación de productos.
 2. **BLOQUE C (Usuarios):** Edición de perfil, avatares y vista de "Mis productos".
 3. **BLOQUE D/E/F:** Notificaciones y refinamiento de la experiencia de intercambio.
 4. **BLOQUE G/H/I:** Tests exhaustivos, pulido de UI (UX) y preparación para producción.
