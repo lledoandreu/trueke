@@ -2,15 +2,23 @@ import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Servicio unificado y centralizado para la gestión de archivos e imágenes
+/// en Supabase Storage (productos y avatares de perfil).
 class StorageService {
-  StorageService();
+  StorageService([SupabaseClient? client]) : _customClient = client;
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _customClient;
+  SupabaseClient get _supabase => _customClient ?? Supabase.instance.client;
 
   static const String _productBucket = 'product-images';
   static const String _productPublicPath =
       '/storage/v1/object/public/$_productBucket/';
 
+  static const String _avatarBucket = 'avatars';
+  static const String _avatarPublicPath =
+      '/storage/v1/object/public/$_avatarBucket/';
+
+  /// Sube la imagen de un producto al bucket 'product-images' organizado por userId.
   Future<String> uploadProductImage(File imageFile) async {
     final user = _supabase.auth.currentUser;
 
@@ -33,6 +41,7 @@ class StorageService {
     return _supabase.storage.from(_productBucket).getPublicUrl(path);
   }
 
+  /// Elimina una imagen de producto de Supabase Storage tras validar propiedad.
   Future<void> deleteProductImage(String publicUrl) async {
     final user = _supabase.auth.currentUser;
 
@@ -57,6 +66,60 @@ class StorageService {
     }
 
     await _supabase.storage.from(_productBucket).remove([path]);
+  }
+
+  /// Sube o actualiza el avatar del usuario en el bucket 'avatars'.
+  Future<String> uploadAvatar({
+    required File file,
+    required String userId,
+  }) async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw const AuthException('Debes iniciar sesión para subir un avatar.');
+    }
+
+    if (user.id != userId) {
+      throw const AuthException(
+        'No tienes permiso para actualizar el avatar de otro usuario.',
+      );
+    }
+
+    final extension = _extensionFromPath(file.path);
+    final path = '$userId/avatar.$extension';
+
+    await _supabase.storage
+        .from(_avatarBucket)
+        .upload(
+          path,
+          file,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+        );
+
+    return _supabase.storage.from(_avatarBucket).getPublicUrl(path);
+  }
+
+  /// Elimina el avatar del usuario si fuera necesario.
+  Future<void> deleteAvatar(String publicUrl) async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw const AuthException(
+        'Debes iniciar sesión para eliminar un avatar.',
+      );
+    }
+
+    final markerIndex = publicUrl.indexOf(_avatarPublicPath);
+
+    if (markerIndex == -1) {
+      return;
+    }
+
+    final path = publicUrl.substring(markerIndex + _avatarPublicPath.length);
+
+    if (path.isNotEmpty && path.startsWith('${user.id}/')) {
+      await _supabase.storage.from(_avatarBucket).remove([path]);
+    }
   }
 
   String _extensionFromPath(String path) {

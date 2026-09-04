@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/favorites_provider.dart';
 import '../../../models/product.dart';
 
-class ProductGallery extends StatelessWidget {
+class ProductGallery extends ConsumerWidget {
   final Product product;
 
   const ProductGallery({super.key, required this.product});
@@ -25,13 +27,19 @@ class ProductGallery extends StatelessWidget {
       product.images.first,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
-        return const Icon(Icons.image_not_supported);
+        return const Center(child: Icon(Icons.image_not_supported, size: 60));
       },
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoritesState = ref.watch(favoritesProvider);
+    final isFavorite = favoritesState.maybeWhen(
+      data: (favs) => favs.any((item) => item.id == product.id),
+      orElse: () => false,
+    );
+
     return SliverAppBar(
       expandedHeight: 360,
       pinned: true,
@@ -39,8 +47,15 @@ class ProductGallery extends StatelessWidget {
       foregroundColor: Colors.black,
       flexibleSpace: FlexibleSpaceBar(background: _buildImage()),
       actions: [
-        IconButton(icon: const Icon(Icons.favorite_border), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.share_outlined), onPressed: () {}),
+        IconButton(
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : null,
+          ),
+          onPressed: () {
+            ref.read(favoritesProvider.notifier).toggleFavorite(product);
+          },
+        ),
       ],
     );
   }

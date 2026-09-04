@@ -19,25 +19,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   bool _sendingMessage = false;
 
   @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
-      ref
-          .read(chatProvider.notifier)
-          .subscribeToConversation(widget.conversationId);
-    });
-  }
-
-  @override
   void dispose() {
-    ref
-        .read(chatProvider.notifier)
-        .unsubscribeFromConversation(widget.conversationId);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -102,102 +84,112 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final conversationsAsync = ref.watch(chatProvider);
+    ref.listen(chatMessagesStreamProvider(widget.conversationId), (_, next) {
+      if (next.hasValue) {
+        _scrollToBottom();
+      }
+    });
 
-    return conversationsAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, _) => Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text('Error cargando el chat: $error')),
+    final conversations = ref.watch(chatProvider).valueOrNull ?? [];
+    final conversation = conversations
+        .where((item) => item.id == widget.conversationId)
+        .firstOrNull;
+
+    final title = conversation?.name ?? 'Chat';
+    final subtitle = conversation?.product ?? '';
+
+    final messagesAsync = ref.watch(
+      chatMessagesStreamProvider(widget.conversationId),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (subtitle.isNotEmpty)
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+          ],
+        ),
       ),
-      data: (conversations) {
-        final conversation = conversations
-            .where((item) => item.id == widget.conversationId)
-            .firstOrNull;
+      body: Column(
+        children: [
+          Expanded(
+            child: messagesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) =>
+                  Center(child: Text('Error cargando el chat: $error')),
+              data: (messages) {
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No hay mensajes aún.\n¡Escribe el primer mensaje!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
 
-        if (conversation == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('Conversación no encontrada.')),
-          );
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  conversation.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  conversation.product,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
+                return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: conversation.messages.length,
+                  itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final message = conversation.messages[index];
+                    final message = messages[index];
 
                     return _MessageBubble(message: message);
                   },
-                ),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          textInputAction: TextInputAction.send,
-                          enabled: !_sendingMessage,
-                          onSubmitted: (_) => _sendMessage(),
-                          decoration: InputDecoration(
-                            hintText: 'Escribe un mensaje...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                          ),
+                );
+              },
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      textInputAction: TextInputAction.send,
+                      enabled: !_sendingMessage,
+                      onSubmitted: (_) => _sendMessage(),
+                      decoration: InputDecoration(
+                        hintText: 'Escribe un mensaje...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: _sendingMessage ? null : _sendMessage,
-                        icon: _sendingMessage
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.send),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _sendingMessage ? null : _sendMessage,
+                    icon: _sendingMessage
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

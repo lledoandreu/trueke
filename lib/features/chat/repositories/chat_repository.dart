@@ -99,6 +99,22 @@ class ChatRepository {
     });
   }
 
+  /// Escucha en tiempo real los mensajes de una conversación mediante Supabase Streams.
+  Stream<List<ChatMessage>> streamMessages(String conversationId) {
+    final userId = AuthService.currentUserId;
+
+    return _client
+        .from(_messages)
+        .stream(primaryKey: ['id'])
+        .eq('conversation_id', conversationId)
+        .order('created_at', ascending: true)
+        .map(
+          (rows) => rows
+              .map((json) => ChatMessage.fromJson(json, currentUserId: userId))
+              .toList(),
+        );
+  }
+
   RealtimeChannel subscribeToMessages({
     required String conversationId,
     required void Function(ChatMessage message) onMessage,
