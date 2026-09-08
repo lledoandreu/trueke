@@ -1,5 +1,13 @@
 class SupabaseConfig {
-  static const String url = 'https://xfvkxltlliilqktdrjge.supabase.co';
-  static const String publishableKey =
-      'sb_publishable_imc2FiuFqqTu4z19_cV_PQ_kxpyCBmq';
+  static const String url = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: '',
+  );
+
+  static const String publishableKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
+
+  static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
 }

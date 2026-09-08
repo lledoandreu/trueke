@@ -1,49 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:trueke/app/shell/main_shell.dart';
+import 'package:trueke/features/home/home_page.dart'; // O la página inicial por defecto de tu estructura
 
-import '../core/theme/app_theme.dart';
-import '../features/auth/auth_page.dart';
-import '../features/auth/auth_service.dart';
-import 'router/app_router.dart';
-import 'shell/main_shell.dart';
-
-class TruekeApp extends StatelessWidget {
-  const TruekeApp({super.key});
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Trueke',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      onGenerateRoute: AppRouter.onGenerateRoute,
-      home: const _AuthGate(),
-    );
-  }
-}
-
-class _AuthGate extends StatelessWidget {
-  const _AuthGate();
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: AuthService.authStateChanges,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final user = AuthService.currentUser;
-        if (user == null) {
-          return const AuthPage();
-        }
-
-        return ProviderScope(key: ValueKey(user.id), child: const MainShell());
-      },
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      // Inyectamos la página correspondiente dentro del contenedor de la Shell
+      home: const MainShell(
+        child: HomePage(), 
+      ),
     );
   }
 }

@@ -90,7 +90,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       }
     });
 
-    final conversations = ref.watch(chatProvider).valueOrNull ?? [];
+    final conversations = ref.watch(chatProvider).value ?? [];
     final conversation = conversations
         .where((item) => item.id == widget.conversationId)
         .firstOrNull;

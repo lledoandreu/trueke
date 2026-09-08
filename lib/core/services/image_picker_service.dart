@@ -1,16 +1,15 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImagePickerService {
   final ImagePicker _picker = ImagePicker();
 
-  // Método automático para abrir la galería y seleccionar una foto
   Future<File?> pickImageFromGallery() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality:
-            80, // Optimiza el tamaño reduciendo la calidad al 80% automáticamente
+        imageQuality: 80,
       );
 
       if (pickedFile != null) {
@@ -18,12 +17,11 @@ class ImagePickerService {
       }
       return null;
     } catch (e) {
-      // Si hay un error de permisos o hardware, devuelve null de forma segura
+      debugPrint('Error al seleccionar imagen de galería: $e');
       return null;
     }
   }
 
-  // Método automático por si en el futuro quieres activar la Cámara directamente
   Future<File?> pickImageFromCamera() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -36,6 +34,7 @@ class ImagePickerService {
       }
       return null;
     } catch (e) {
+      debugPrint('Error al capturar imagen con cámara: $e');
       return null;
     }
   }

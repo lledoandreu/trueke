@@ -27,11 +27,11 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
   }
 
   bool isFavorite(Product product) {
-    return state.valueOrNull?.any((item) => item.id == product.id) ?? false;
+    return state.value?.any((item) => item.id == product.id) ?? false;
   }
 
   Future<void> toggleFavorite(Product product) async {
-    final currentFavorites = state.valueOrNull ?? [];
+    final currentFavorites = state.value ?? [];
 
     final isCurrentlyFavorite = currentFavorites.any(
       (item) => item.id == product.id,

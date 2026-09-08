@@ -49,3 +49,6 @@ app.*.map.json
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Environment variables with secrets
+.env

@@ -10,7 +10,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 final profileProvider = FutureProvider<Profile?>((ref) async {
-  final userId = ref.watch(authUserIdProvider).valueOrNull;
+  final userId = ref.watch(authUserIdProvider).value;
 
   if (userId == null) {
     return null;

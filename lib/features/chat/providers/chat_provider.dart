@@ -37,7 +37,7 @@ class ChatNotifier extends AsyncNotifier<List<ChatConversation>> {
 
   @override
   Future<List<ChatConversation>> build() async {
-    final userId = ref.watch(authUserIdProvider).valueOrNull;
+    final userId = ref.watch(authUserIdProvider).value;
 
     if (userId == null) {
       return [];

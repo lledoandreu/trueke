@@ -1,41 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/providers/shell_index_provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../trades/trade_offers_page.dart';
+import 'package:trueke/core/providers/shell_index_provider.dart';
 
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: Colors.blue,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Expanded(child: Text('Trueke', style: AppTextStyles.heading1)),
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const TradeOffersPage(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.notifications_none),
-            color: AppColors.textPrimary,
-            tooltip: 'Propuestas',
+          const Text(
+            'Trueke App',
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           IconButton(
+            icon: const Icon(Icons.chat, color: Colors.white),
             onPressed: () {
-              ref.read(shellIndexProvider.notifier).state = 4;
+              ref.read(shellIndexProvider.notifier).setIndex(1);
             },
-            icon: const Icon(Icons.person_outline),
-            color: AppColors.textPrimary,
-            tooltip: 'Perfil',
           ),
         ],
       ),
