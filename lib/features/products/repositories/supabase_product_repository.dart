@@ -1,16 +1,14 @@
 import 'dart:io';
-
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../core/services/storage_service.dart';
 import '../../../models/product.dart';
 import 'product_repository.dart';
 
 class SupabaseProductRepository implements ProductRepository {
-  SupabaseProductRepository();
+  SupabaseProductRepository(this._client);
 
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _client;
   final StorageService _storageService = StorageService();
 
   static const _table = 'products';
@@ -35,10 +33,7 @@ class SupabaseProductRepository implements ProductRepository {
         .eq('id', id)
         .maybeSingle();
 
-    if (response == null) {
-      return null;
-    }
-
+    if (response == null) return null;
     return Product.fromJson(response);
   }
 

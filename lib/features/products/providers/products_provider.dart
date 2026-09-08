@@ -1,17 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../../../core/services/storage_service.dart';
+import 'product_repository_provider.dart';
 import 'package:trueke/models/product.dart';
 
-final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
-  () {
-    return ProductsNotifier();
-  },
-);
+final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(() {
+  return ProductsNotifier();
+});
 
 final myProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final productsAsync = ref.watch(productsProvider);
@@ -22,33 +18,17 @@ final myProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
 });
 
 class ProductsNotifier extends AsyncNotifier<List<Product>> {
-  final _supabase = Supabase.instance.client;
-
   @override
   Future<List<Product>> build() async {
-    return _fetchProducts();
-  }
-
-  Future<List<Product>> _fetchProducts() async {
-    try {
-      final response = await _supabase
-          .from('products')
-          .select()
-          .order('created_at', ascending: false);
-      final List<dynamic> data = response as List<dynamic>;
-      return data
-          .map((json) => Product.fromJson(json as Map<String, dynamic>))
-          .toList();
-    } catch (error, stackTrace) {
-      Error.throwWithStackTrace(error, stackTrace);
-    }
+    return ref.watch(productRepositoryProvider).getProducts();
   }
 
   Future<void> addProduct(Product product) async {
     state = const AsyncValue.loading();
     try {
-      await _supabase.from('products').insert(product.toJson());
-      final updated = await _fetchProducts();
+      final repo = ref.read(productRepositoryProvider);
+      await repo.createProduct(product);
+      final updated = await repo.getProducts();
       state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -59,11 +39,9 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   Future<void> updateProduct(Product product) async {
     state = const AsyncValue.loading();
     try {
-      await _supabase
-          .from('products')
-          .update(product.toJson())
-          .eq('id', product.id);
-      final updated = await _fetchProducts();
+      final repo = ref.read(productRepositoryProvider);
+      await repo.updateProduct(product);
+      final updated = await repo.getProducts();
       state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -73,7 +51,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
   Future<String> uploadProductImage(XFile image) async {
     try {
-      return await StorageService().uploadProductImage(File(image.path));
+      return await ref.read(productRepositoryProvider).uploadProductImage(image);
     } catch (e) {
       throw Exception('Error al subir imagen: $e');
     }
@@ -82,8 +60,9 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   Future<void> deleteProduct(String id) async {
     state = const AsyncValue.loading();
     try {
-      await _supabase.from("products").delete().eq("id", id);
-      final updated = await _fetchProducts();
+      final repo = ref.read(productRepositoryProvider);
+      await repo.deleteProduct(id);
+      final updated = await repo.getProducts();
       state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -92,6 +71,6 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 
   Future<void> deleteProductImage(String url) async {
-    await StorageService().deleteProductImage(url);
+    await ref.read(productRepositoryProvider).deleteProductImage(url);
   }
 }
