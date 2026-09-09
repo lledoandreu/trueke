@@ -19,6 +19,9 @@ class ChatConversation {
   final String? buyerId;
   final String? sellerId;
 
+  /// Devuelve el texto del último mensaje si existe, de lo contrario devuelve null.
+  String? get lastMessageText => messages.isEmpty ? null : messages.last.text;
+
   ChatConversation copyWith({List<ChatMessage>? messages}) {
     return ChatConversation(
       id: id,
