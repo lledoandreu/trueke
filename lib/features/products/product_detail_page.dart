@@ -5,7 +5,7 @@ import '../../app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
-import '../chat/chat_detail_page.dart';
+import 'package:trueke/features/chat/chat_detail_page.dart';
 import '../chat/providers/chat_provider.dart';
 import 'widgets/product_description.dart';
 import 'widgets/product_gallery.dart';
