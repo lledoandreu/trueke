@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../models/product.dart';
-import '../auth/auth_service.dart';
 import '../products/providers/products_provider.dart';
 import '../products/publish_product_page.dart';
 
@@ -12,8 +11,7 @@ class MyListingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(productsProvider);
-    final currentUserId = AuthService.currentUserId;
+    final productsAsync = ref.watch(myProductsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis anuncios')),
@@ -45,11 +43,7 @@ class MyListingsPage extends ConsumerWidget {
             ),
           ),
         ),
-        data: (products) {
-          final listings = products
-              .where((product) => product.ownerId == currentUserId)
-              .toList();
-
+        data: (listings) {
           if (listings.isEmpty) {
             return RefreshIndicator(
               onRefresh: () async {
