@@ -5,7 +5,6 @@ import '../../../models/product.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../repositories/chat_repository.dart';
 
-// Asumimos authUserIdProvider basándonos en tu código anterior
 final authUserIdProvider = Provider<AsyncValue<String?>>((ref) {
   final client = ref.watch(supabaseClientProvider);
   return AsyncValue.data(client.auth.currentUser?.id);
@@ -13,7 +12,7 @@ final authUserIdProvider = Provider<AsyncValue<String?>>((ref) {
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  return ChatRepository(client);
+  return SupabaseChatRepository(client);
 });
 
 final chatMessagesStreamProvider = StreamProvider.autoDispose
@@ -59,9 +58,6 @@ class ChatNotifier extends AsyncNotifier<List<ChatConversation>> {
   }) async {
     await _repository.addMessage(conversationId: conversationId, text: text);
   }
-
-  void subscribeToConversation(String conversationId) {}
-  void unsubscribeFromConversation(String conversationId) {}
 }
 
 final chatProvider =

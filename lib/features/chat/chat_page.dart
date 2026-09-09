@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/core/supabase/supabase_client.dart';
+import 'package:trueke/features/chat/chat_detail_page.dart';
 import 'package:trueke/features/chat/providers/chat_provider.dart';
 import 'package:trueke/features/chat/providers/ai_chat_provider.dart';
 
@@ -113,7 +114,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () {
-                        // Navegación hacia la subpantalla chat_detail_page.dart
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) =>
+                                ChatDetailPage(conversationId: conversation.id),
+                          ),
+                        );
                       },
                     );
                   },

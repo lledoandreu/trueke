@@ -4,14 +4,28 @@ import '../../../models/chat_message.dart';
 import '../../../models/product.dart';
 import '../../auth/auth_service.dart';
 
-class ChatRepository {
-  ChatRepository(this._client);
+abstract class ChatRepository {
+  Future<List<ChatConversation>> getConversations();
+  Future<String> startConversation({
+    required Product product,
+    required String message,
+  });
+  Future<void> addMessage({
+    required String conversationId,
+    required String text,
+  });
+  Stream<List<ChatMessage>> streamMessages(String conversationId);
+}
+
+class SupabaseChatRepository implements ChatRepository {
+  SupabaseChatRepository(this._client);
 
   final SupabaseClient _client;
 
   static const _conversations = 'conversations';
   static const _messages = 'messages';
 
+  @override
   Future<List<ChatConversation>> getConversations() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
@@ -34,6 +48,7 @@ class ChatRepository {
         .toList();
   }
 
+  @override
   Future<String> startConversation({
     required Product product,
     required String message,
@@ -75,6 +90,7 @@ class ChatRepository {
     return conversationId;
   }
 
+  @override
   Future<void> addMessage({
     required String conversationId,
     required String text,
@@ -96,6 +112,7 @@ class ChatRepository {
     });
   }
 
+  @override
   Stream<List<ChatMessage>> streamMessages(String conversationId) {
     final userId = _client.auth.currentUser?.id;
 
