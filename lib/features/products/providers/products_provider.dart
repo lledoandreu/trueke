@@ -1,6 +1,6 @@
+import 'package:trueke/core/supabase/supabase_client.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'product_repository_provider.dart';
 import 'package:trueke/models/product.dart';
@@ -13,7 +13,7 @@ final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
 
 final myProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final productsAsync = ref.watch(productsProvider);
-  final myId = Supabase.instance.client.auth.currentUser?.id;
+  final myId = ref.watch(supabaseClientProvider).auth.currentUser?.id;
   return productsAsync.whenData(
     (list) => list.where((p) => p.ownerId == myId).toList(),
   );

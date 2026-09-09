@@ -6,10 +6,11 @@ import '../../../models/product.dart';
 import 'product_repository.dart';
 
 class SupabaseProductRepository implements ProductRepository {
-  SupabaseProductRepository(this._client);
+  SupabaseProductRepository(this._client)
+    : _storageService = StorageService(_client);
 
   final SupabaseClient _client;
-  final StorageService _storageService = StorageService();
+  final StorageService _storageService;
 
   static const _table = 'products';
 
