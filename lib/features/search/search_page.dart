@@ -66,7 +66,7 @@ class SearchPage extends ConsumerWidget {
                         crossAxisCount: columns,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 0.62,
+                        childAspectRatio: 0.55,
                       ),
                       itemBuilder: (context, index) {
                         return ProductCard(product: products[index]);
@@ -88,54 +88,63 @@ class _FilterChips extends ConsumerWidget {
 
   final ProductFilters filters;
 
+  static const _availableCategories = [
+    'Electrónica',
+    'Moda',
+    'Hogar',
+    'Gaming',
+    'Deporte',
+    'Otros',
+  ];
+
+  String _tradeTypeLabel(TradeType type) {
+    switch (type) {
+      case TradeType.trade:
+        return 'Trueque';
+      case TradeType.sale:
+        return 'Venta';
+      case TradeType.tradeAndMoney:
+        return 'Trueque + €';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(productFiltersProvider.notifier);
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Row(
+    return SizedBox(
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         children: [
-          FilterChip(
-            label: const Text('Todas'),
-            selected: filters.category == null,
-            onSelected: (_) => notifier.clearCategory(),
-          ),
-          const SizedBox(width: 8),
-          for (final category in const [
-            'Electrónica',
-            'Moda',
-            'Hogar',
-            'Gaming',
-            'Deporte',
-          ]) ...[
-            FilterChip(
-              label: Text(category),
-              selected: filters.category == category,
-              onSelected: (_) => notifier.toggleCategory(category),
+          // Filtros por Tipo de Trueque
+          for (final type in TradeType.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: filters.tradeType == type,
+                label: Text(_tradeTypeLabel(type)),
+                onSelected: (_) => notifier.setTradeType(
+                  filters.tradeType == type ? null : type,
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-          ],
-          for (final option in TradeType.values) ...[
-            FilterChip(
-              label: Text(_tradeTypeLabel(option)),
-              selected: filters.tradeType == option,
-              onSelected: (selected) =>
-                  notifier.setTradeType(selected ? option : null),
+
+          const VerticalDivider(width: 16, indent: 8, endIndent: 8),
+
+          // Filtros por Categoría
+          for (final cat in _availableCategories)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: filters.category == cat,
+                label: Text(cat),
+                onSelected: (_) => notifier.toggleCategory(cat),
+              ),
             ),
-            const SizedBox(width: 8),
-          ],
         ],
       ),
     );
-  }
-
-  String _tradeTypeLabel(TradeType type) {
-    return switch (type) {
-      TradeType.trade => 'Trueque',
-      TradeType.sale => 'Venta',
-      TradeType.tradeAndMoney => 'Trueque + €',
-    };
   }
 }

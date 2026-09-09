@@ -135,7 +135,7 @@ class MyListingsPage extends ConsumerWidget {
     }
 
     try {
-      await ref.read(productsProvider.notifier).deleteProduct(product.id);
+      await ref.read(productsProvider.notifier).deleteProduct(product);
 
       if (!context.mounted) {
         return;
@@ -213,6 +213,22 @@ class _ProductThumbnail extends StatelessWidget {
 
   final Product product;
 
+  IconData _categoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'tecnología':
+      case 'electronics':
+        return Icons.devices;
+      case 'ropa':
+      case 'fashion':
+        return Icons.checkroom;
+      case 'hogar':
+      case 'home':
+        return Icons.home_max;
+      default:
+        return Icons.shopping_bag_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (product.imageUrl.isEmpty) {
@@ -260,8 +276,8 @@ class _ProductThumbnail extends StatelessWidget {
             color: const Color(0xFFF2F3F5),
             child: const Center(
               child: SizedBox(
-                width: 22,
-                height: 22,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
@@ -269,17 +285,6 @@ class _ProductThumbnail extends StatelessWidget {
         },
       ),
     );
-  }
-
-  IconData _categoryIcon(String category) {
-    return switch (category) {
-      'Electrónica' => Icons.devices_outlined,
-      'Moda' => Icons.checkroom_outlined,
-      'Hogar' => Icons.chair_outlined,
-      'Gaming' => Icons.sports_esports_outlined,
-      'Deporte' => Icons.directions_bike_outlined,
-      _ => Icons.inventory_2_outlined,
-    };
   }
 }
 
@@ -295,57 +300,39 @@ class _ProductInfo extends StatelessWidget {
       children: [
         Text(
           product.title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
-          '${product.condition} · ${product.location}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodySmall,
+          product.category,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
         ),
-        const SizedBox(height: 8),
-        _TradeBadge(product: product),
+        if (product.wanted.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              'Busca: ${product.wanted}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ],
-    );
-  }
-}
-
-class _TradeBadge extends StatelessWidget {
-  const _TradeBadge({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = switch (product.tradeType) {
-      TradeType.trade => 'Trueque',
-      TradeType.sale =>
-        product.price != null
-            ? '${product.price!.toStringAsFixed(0)} €'
-            : 'Venta',
-      TradeType.tradeAndMoney =>
-        product.price != null
-            ? 'Trueque + ${product.price!.toStringAsFixed(0)} €'
-            : 'Trueque + dinero',
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
-      ),
     );
   }
 }

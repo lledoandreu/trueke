@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trueke/core/supabase/supabase_client.dart';
 import 'package:trueke/features/chat/providers/chat_provider.dart';
 import 'package:trueke/features/chat/providers/ai_chat_provider.dart';
 
@@ -25,10 +26,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     super.dispose();
   }
 
+  /// Construye la URL pública del avatar basándose en el ID del usuario.
+  String _getAvatarUrl(String userId) {
+    return 'https://supabase.co';
+  }
+
   @override
   Widget build(BuildContext context) {
     final aiChatMessages = ref.watch(aiChatProvider);
     final userConversations = ref.watch(chatProvider);
+    final currentUserId = ref
+        .watch(supabaseClientProvider)
+        .auth
+        .currentUser
+        ?.id;
 
     return DefaultTabController(
       length: 2,
@@ -56,11 +67,47 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   itemCount: conversations.length,
                   itemBuilder: (context, index) {
                     final conversation = conversations[index];
+
+                    // Identificar el ID del otro participante
+                    final isBuyer = conversation.buyerId == currentUserId;
+                    final otherUserId = isBuyer
+                        ? conversation.sellerId
+                        : conversation.buyerId;
+
+                    // Inicial del nombre para el avatar por defecto
+                    final initial = conversation.name.isNotEmpty
+                        ? conversation.name.substring(0, 1).toUpperCase()
+                        : '?';
+
                     return ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.person)),
+                      leading: otherUserId != null
+                          ? CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              backgroundImage: NetworkImage(
+                                _getAvatarUrl(otherUserId),
+                              ),
+                              onBackgroundImageError: (_, _) {
+                                // Parámetros corregidos a un solo guion bajo cada uno para cumplir las normas del linter
+                              },
+                              child: Text(
+                                initial,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : const CircleAvatar(
+                              backgroundColor: Colors.grey,
+                              child: Icon(Icons.person, color: Colors.white),
+                            ),
                       title: Text(conversation.product),
                       subtitle: Text(
-                        conversation.lastMessageText ?? 'No hay mensajes.',
+                        '${conversation.name}: ${conversation.lastMessageText ?? "No hay mensajes."}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -107,9 +154,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12.0),
                                   decoration: BoxDecoration(
-                                    color: isUser
-                                        ? Colors.blue[100]
-                                        : Colors.grey[200],
+                                    color: isUser ? Colors.blue : Colors.grey,
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   child: Text(content),
@@ -127,12 +172,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         child: TextField(
                           controller: _aiTextController,
                           decoration: const InputDecoration(
-                            hintText: 'Pregunta algo sobre un trueque...',
+                            hintText: 'Pregunta a Trueki IA...',
                             border: OutlineInputBorder(),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
                       IconButton(
                         icon: const Icon(Icons.send),
                         onPressed: () {

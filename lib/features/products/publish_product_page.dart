@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,10 +8,8 @@ import 'package:trueke/features/products/providers/products_provider.dart';
 
 class _ImagePreview extends StatelessWidget {
   const _ImagePreview({required this.image, required this.onRemove});
-
   final ImageProvider image;
   final VoidCallback onRemove;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -51,7 +48,6 @@ class _ImagePreview extends StatelessWidget {
 class PublishProductPage extends ConsumerStatefulWidget {
   const PublishProductPage({super.key, this.product});
   final Product? product;
-
   @override
   ConsumerState<PublishProductPage> createState() => _PublishProductPageState();
 }
@@ -72,7 +68,6 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     'Deporte',
     'Otros',
   ];
-
   static const _conditions = ['Nueva', 'Como nuevo', 'Buen estado', 'Usado'];
 
   String _category = 'Electrónica';
@@ -94,7 +89,6 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     _priceController = TextEditingController(
       text: product?.price?.toStringAsFixed(0),
     );
-
     if (product != null) {
       _existingImages.addAll(product.images);
       _category = product.category;
@@ -131,15 +125,12 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   void _removeExistingImage(String url) {
     setState(() {
       _existingImages.remove(url);
-      if (!_removedImages.contains(url)) {
-        _removedImages.add(url);
-      }
+      if (!_removedImages.contains(url)) _removedImages.add(url);
     });
   }
 
-  void _removeSelectedImage(XFile image) {
-    setState(() => _selectedImages.remove(image));
-  }
+  void _removeSelectedImage(XFile image) =>
+      setState(() => _selectedImages.remove(image));
 
   Future<void> _publish() async {
     if (!_formKey.currentState!.validate()) return;
@@ -167,7 +158,6 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
             .uploadProductImage(image);
         if (!uploadedImages.contains(url)) uploadedImages.add(url);
       }
-
       final allImages = <String>[..._existingImages, ...uploadedImages];
       final product = Product(
         id:
@@ -197,11 +187,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       for (final url in _removedImages) {
         try {
           await ref.read(productsProvider.notifier).deleteProductImage(url);
-        } catch (_) {
-          // La publicación ya se ha guardado; la imagen puede limpiarse después.
-        }
+        } catch (_) {}
       }
-
       if (!mounted) return;
       Navigator.pop(context);
     } catch (error) {
@@ -210,7 +197,6 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
           await ref.read(productsProvider.notifier).deleteProductImage(url);
         }
       }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo guardar el anuncio: $error')),
@@ -261,16 +247,11 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       decoration: const InputDecoration(labelText: 'Categoría'),
                       items: _categories
                           .map(
-                            (category) => DropdownMenuItem(
-                              value: category,
-                              child: Text(category),
-                            ),
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _category = value);
-                        }
+                      onChanged: (val) {
+                        if (val != null) setState(() => _category = val);
                       },
                     ),
                     const SizedBox(height: 12),
@@ -281,16 +262,11 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       decoration: const InputDecoration(labelText: 'Estado'),
                       items: _conditions
                           .map(
-                            (condition) => DropdownMenuItem(
-                              value: condition,
-                              child: Text(condition),
-                            ),
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _condition = value);
-                        }
+                      onChanged: (val) {
+                        if (val != null) setState(() => _condition = val);
                       },
                     ),
                     const SizedBox(height: 12),
@@ -325,14 +301,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (_tradeType == TradeType.trade) {
-                            return null;
-                          }
-
+                          if (_tradeType == TradeType.trade) return null;
                           final parsed = double.tryParse(
                             (value ?? '').trim().replaceAll(',', '.'),
                           );
-
                           return parsed == null || parsed <= 0
                               ? 'Introduce un precio mayor que cero'
                               : null;
@@ -374,10 +346,14 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       icon: const Icon(Icons.photo_library_outlined),
                       label: const Text('Fotos'),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _publish,
-                      child: const Text('Guardar'),
+                      child: Text(
+                        widget.product == null
+                            ? 'Publicar artículo'
+                            : 'Guardar cambios',
+                      ),
                     ),
                   ],
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/models/trade_offer.dart';
 import 'package:trueke/features/trades/providers/trade_offers_provider.dart';
+import '../../app/routes/app_routes.dart';
 
 class TradeOffersPage extends ConsumerWidget {
   const TradeOffersPage({super.key});
@@ -154,6 +155,8 @@ class _OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canRespond = offer.isIncoming && offer.isPending && onRespond != null;
+    final isAccepted = offer.status == TradeOfferStatus.accepted;
+    final otherUserId = offer.isIncoming ? offer.fromUserId : offer.toUserId;
 
     return Card(
       elevation: 2,
@@ -181,7 +184,7 @@ class _OfferCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor().withValues(alpha: 0.15),
+                    color: _statusColor().withAlpha(38),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -232,6 +235,31 @@ class _OfferCard extends StatelessWidget {
                       backgroundColor: Colors.green,
                     ),
                     child: const Text('Aceptar'),
+                  ),
+                ],
+              ),
+            ],
+            if (isAccepted && otherUserId != null) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.writeReview,
+                        arguments: otherUserId,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.star_rate_rounded,
+                      color: Colors.amber,
+                    ),
+                    label: const Text('Valorar trueque'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blueAccent,
+                    ),
                   ),
                 ],
               ),

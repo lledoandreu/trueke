@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trueke/core/supabase/supabase_client.dart';
 
 import '../../../models/chat_message.dart';
 import 'providers/chat_provider.dart';
@@ -82,6 +83,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     });
   }
 
+  String _getAvatarUrl(String userId) {
+    return 'https://supabase.co';
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(chatMessagesStreamProvider(widget.conversationId), (_, next) {
@@ -97,6 +102,19 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
     final title = conversation?.name ?? 'Chat';
     final subtitle = conversation?.product ?? '';
+    final currentUserId = ref
+        .watch(supabaseClientProvider)
+        .auth
+        .currentUser
+        ?.id;
+
+    final isBuyer = conversation?.buyerId == currentUserId;
+    final otherUserId = isBuyer
+        ? conversation?.sellerId
+        : conversation?.buyerId;
+    final initial = title.isNotEmpty
+        ? title.substring(0, 1).toUpperCase()
+        : '?';
 
     final messagesAsync = ref.watch(
       chatMessagesStreamProvider(widget.conversationId),
@@ -104,15 +122,53 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        titleSpacing: 0,
+        title: Row(
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (subtitle.isNotEmpty)
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+            otherUserId != null
+                ? CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    backgroundImage: NetworkImage(_getAvatarUrl(otherUserId)),
+                    onBackgroundImageError: (_, _) {},
+                    child: Text(
+                      initial,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                : const CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, color: Colors.white, size: 20),
+                  ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty)
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),

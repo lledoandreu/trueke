@@ -10,9 +10,7 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
   @override
   Future<List<Product>> build() async {
     final preferences = await SharedPreferences.getInstance();
-
     final favoriteIds = preferences.getStringList(_favoritesKey) ?? [];
-
     final productsAsync = ref.watch(productsProvider);
 
     return productsAsync.when(
@@ -22,7 +20,7 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
             .toList();
       },
       loading: () => [],
-      error: (_, _) => [],
+      error: (_, errorParam) => [],
     );
   }
 
@@ -32,7 +30,6 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
 
   Future<void> toggleFavorite(Product product) async {
     final currentFavorites = state.value ?? [];
-
     final isCurrentlyFavorite = currentFavorites.any(
       (item) => item.id == product.id,
     );
@@ -44,9 +41,7 @@ class FavoritesNotifier extends AsyncNotifier<List<Product>> {
     state = AsyncData(updatedFavorites);
 
     final preferences = await SharedPreferences.getInstance();
-
-    final ids = updatedFavorites.map((product) => product.id).toList();
-
+    final ids = updatedFavorites.map((p) => p.id).toList();
     await preferences.setStringList(_favoritesKey, ids);
   }
 }

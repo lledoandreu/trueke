@@ -7,9 +7,26 @@ import 'package:trueke/features/trades/trade_offers_page.dart';
 import 'package:trueke/features/profile/edit_profile_page.dart';
 import 'package:trueke/features/profile/my_listings_page.dart';
 import 'package:trueke/features/profile/providers/profile_provider.dart';
+import 'package:trueke/features/profile/providers/reviews_provider.dart';
+import '../../app/routes/app_routes.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
+
+  Widget _buildStars(double rating) {
+    final intFullStars = rating.floor();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < 5; i++)
+          Icon(
+            i < intFullStars ? Icons.star_rounded : Icons.star_border_rounded,
+            color: Colors.amber,
+            size: 20,
+          ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,9 +42,7 @@ class ProfilePage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            onPressed: () async {
-              await AuthService.signOut();
-            },
+            onPressed: () async => AuthService.signOut(),
           ),
         ],
       ),
@@ -43,6 +58,8 @@ class ProfilePage extends ConsumerWidget {
           }
           final nameLabel =
               profile.displayName ?? profile.username ?? 'Usuario';
+          final reviewsAsync = ref.watch(userReviewsProvider(profile.id));
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -51,7 +68,7 @@ class ProfilePage extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                      backgroundColor: Colors.blueAccent.withAlpha(25),
                       backgroundImage:
                           profile.avatarUrl != null &&
                               profile.avatarUrl!.isNotEmpty
@@ -83,6 +100,60 @@ class ProfilePage extends ConsumerWidget {
                     Text(
                       profile.username ?? '',
                       style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.reviews,
+                        arguments: profile.id,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: reviewsAsync.when(
+                          loading: () => const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          error: (_, err) => const SizedBox.shrink(),
+                          data: (reviews) {
+                            if (reviews.isEmpty) {
+                              return const Text(
+                                'Sin valoraciones aún',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              );
+                            }
+                            final totalRating = reviews
+                                .map((r) => r.rating)
+                                .reduce((a, b) => a + b);
+                            final averageRating = totalRating / reviews.length;
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildStars(averageRating),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${averageRating.toStringAsFixed(1)} (${reviews.length})',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ],
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/providers/favorites_provider.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
 import 'package:trueke/features/chat/chat_detail_page.dart';
@@ -82,6 +83,10 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isFav = ref
+        .watch(favoritesProvider.notifier)
+        .isFavorite(widget.product);
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -108,6 +113,15 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
+        onPressed: () =>
+            ref.read(favoritesProvider.notifier).toggleFavorite(widget.product),
+        child: Icon(
+          isFav ? Icons.favorite : Icons.favorite_border,
+          color: isFav ? Colors.red : Colors.grey,
+        ),
+      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -115,7 +129,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
             color: Theme.of(context).scaffoldBackgroundColor,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withAlpha(13),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -155,8 +169,8 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                     ),
                   ),
                   onPressed: _handleTradeOffer,
-                  icon: const Icon(Icons.swap_horizontal_circle_rounded),
-                  label: const Text('Proponer Trueque'),
+                  icon: const Icon(Icons.swap_horiz),
+                  label: const Text('Ofertar Trueque'),
                 ),
               ),
             ],

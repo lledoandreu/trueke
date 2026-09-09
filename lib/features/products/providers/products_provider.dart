@@ -61,11 +61,20 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
     }
   }
 
-  Future<void> deleteProduct(String id) async {
+  Future<void> deleteProduct(Product product) async {
     state = const AsyncValue.loading();
     try {
       final repo = ref.read(productRepositoryProvider);
-      await repo.deleteProduct(id);
+
+      if (product.imageUrl.isNotEmpty) {
+        try {
+          await repo.deleteProductImage(product.imageUrl);
+        } catch (_) {
+          // Captura silenciosa para evitar romper el flujo si el archivo no existe
+        }
+      }
+
+      await repo.deleteProduct(product.id);
       final updated = await repo.getProducts();
       state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
