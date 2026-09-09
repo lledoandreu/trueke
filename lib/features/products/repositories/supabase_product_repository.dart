@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/storage_service.dart';
@@ -15,15 +16,39 @@ class SupabaseProductRepository implements ProductRepository {
   static const _table = 'products';
 
   @override
-  Future<List<Product>> getProducts() async {
+  Future<List<Product>> getProducts({
+    double? userLatitude,
+    double? userLongitude,
+    double? radiusInKm,
+  }) async {
     final response = await _client
         .from(_table)
         .select()
         .order('created_at', ascending: false);
 
-    return (response as List<dynamic>)
+    final allProducts = (response as List<dynamic>)
         .map((item) => Product.fromJson(item as Map<String, dynamic>))
         .toList();
+
+    if (userLatitude == null || userLongitude == null || radiusInKm == null) {
+      return allProducts;
+    }
+
+    return allProducts.where((product) {
+      if (product.latitude == null || product.longitude == null) {
+        return false;
+      }
+
+      final distanceInMeters = Geolocator.distanceBetween(
+        userLatitude,
+        userLongitude,
+        product.latitude!,
+        product.longitude!,
+      );
+
+      final distanceInKm = distanceInMeters / 1000.0;
+      return distanceInKm <= radiusInKm;
+    }).toList();
   }
 
   @override

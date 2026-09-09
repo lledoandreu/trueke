@@ -1,29 +1,51 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:geolocator/geolocator.dart';
 import '../../../models/product.dart';
 import 'products_provider.dart';
 
 class ProductFilters {
-  const ProductFilters({this.query = '', this.category, this.tradeType});
+  const ProductFilters({
+    this.query = '',
+    this.category,
+    this.tradeType,
+    this.userLatitude,
+    this.userLongitude,
+    this.radiusInKm,
+  });
 
   final String query;
   final String? category;
   final TradeType? tradeType;
+  final double? userLatitude;
+  final double? userLongitude;
+  final double? radiusInKm;
 
   bool get hasActiveFilters =>
-      query.isNotEmpty || category != null || tradeType != null;
+      query.isNotEmpty ||
+      category != null ||
+      tradeType != null ||
+      (userLatitude != null && userLongitude != null && radiusInKm != null);
 
   ProductFilters copyWith({
     String? query,
     String? category,
     TradeType? tradeType,
+    double? userLatitude,
+    double? userLongitude,
+    double? radiusInKm,
     bool clearCategory = false,
     bool clearTradeType = false,
+    bool clearGeoFilter = false,
   }) {
     return ProductFilters(
       query: query ?? this.query,
       category: clearCategory ? null : category ?? this.category,
       tradeType: clearTradeType ? null : tradeType ?? this.tradeType,
+      userLatitude: clearGeoFilter ? null : userLatitude ?? this.userLatitude,
+      userLongitude: clearGeoFilter
+          ? null
+          : userLongitude ?? this.userLongitude,
+      radiusInKm: clearGeoFilter ? null : radiusInKm ?? this.radiusInKm,
     );
   }
 }
@@ -54,6 +76,22 @@ class ProductFiltersNotifier extends Notifier<ProductFilters> {
     );
   }
 
+  void setGeoFilter({
+    required double latitude,
+    required double longitude,
+    required double radiusInKm,
+  }) {
+    state = state.copyWith(
+      userLatitude: latitude,
+      userLongitude: longitude,
+      radiusInKm: radiusInKm,
+    );
+  }
+
+  void clearGeoFilter() {
+    state = state.copyWith(clearGeoFilter: true);
+  }
+
   void clear() => state = const ProductFilters();
 }
 
@@ -78,12 +116,32 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
             product.location,
             product.owner,
           ].any((value) => value.toLowerCase().contains(normalizedQuery));
+
       final matchesCategory =
           filters.category == null || product.category == filters.category;
+
       final matchesTradeType =
           filters.tradeType == null || product.tradeType == filters.tradeType;
 
-      return matchesQuery && matchesCategory && matchesTradeType;
+      bool matchesGeo = true;
+      if (filters.userLatitude != null &&
+          filters.userLongitude != null &&
+          filters.radiusInKm != null) {
+        if (product.latitude == null || product.longitude == null) {
+          matchesGeo = false;
+        } else {
+          final distanceInMeters = Geolocator.distanceBetween(
+            filters.userLatitude!,
+            filters.userLongitude!,
+            product.latitude!,
+            product.longitude!,
+          );
+          final distanceInKm = distanceInMeters / 1000.0;
+          matchesGeo = distanceInKm <= filters.radiusInKm!;
+        }
+      }
+
+      return matchesQuery && matchesCategory && matchesTradeType && matchesGeo;
     }).toList(),
   );
 });

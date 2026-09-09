@@ -14,6 +14,8 @@ class Product {
   final String description;
   final String wanted;
   final DateTime createdAt;
+  final double? latitude;
+  final double? longitude;
 
   const Product({
     required this.id,
@@ -29,13 +31,14 @@ class Product {
     required this.description,
     required this.wanted,
     required this.createdAt,
+    this.latitude,
+    this.longitude,
   });
 
   String get imageUrl {
     if (images.isEmpty) {
       return '';
     }
-
     return images.first;
   }
 
@@ -53,6 +56,8 @@ class Product {
     'condition': condition,
     'wanted': wanted,
     'created_at': createdAt.toIso8601String(),
+    'latitude': latitude,
+    'longitude': longitude,
   };
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -82,6 +87,12 @@ class Product {
         ? double.tryParse(rawPrice.replaceAll(',', '.'))
         : null;
 
+    final rawLat = json['latitude'];
+    final latitude = rawLat is num ? rawLat.toDouble() : null;
+
+    final rawLng = json['longitude'];
+    final longitude = rawLng is num ? rawLng.toDouble() : null;
+
     return Product(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
@@ -96,6 +107,8 @@ class Product {
       condition: json['condition']?.toString() ?? 'Usado',
       wanted: json['wanted']?.toString() ?? '',
       createdAt: createdAt,
+      latitude: latitude,
+      longitude: longitude,
     );
   }
 }

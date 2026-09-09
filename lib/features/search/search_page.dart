@@ -1,24 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/location_service.dart';
 import '../../models/product.dart';
 import '../home/widgets/product_card.dart';
 import '../home/widgets/search_bar_widget.dart';
 import '../products/providers/product_filters_provider.dart';
+import 'widgets/search_map_view.dart';
 
-class SearchPage extends ConsumerWidget {
+class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SearchPage> createState() => _SearchPageState();
+}
+
+class _SearchPageState extends ConsumerState<SearchPage> {
+  bool _isMapView = false;
+
+  @override
+  Widget build(BuildContext context) {
     final productsAsync = ref.watch(filteredProductsProvider);
     final filters = ref.watch(productFiltersProvider);
+
+    final bool hasActive = filters.hasActiveFilters;
+    final double? userLat = filters.userLatitude;
+    final double? userLng = filters.userLongitude;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Buscar'),
         actions: [
-          if (filters.hasActiveFilters)
+          IconButton(
+            icon: Icon(_isMapView ? Icons.grid_view : Icons.map),
+            onPressed: () {
+              setState(() {
+                _isMapView = !_isMapView;
+              });
+            },
+          ),
+          if (hasActive)
             TextButton(
               onPressed: () =>
                   ref.read(productFiltersProvider.notifier).clear(),
@@ -30,6 +51,7 @@ class SearchPage extends ConsumerWidget {
         children: [
           const SearchBarWidget(),
           _FilterChips(filters: filters),
+          if (userLat != null) _RadiusSlider(filters: filters),
           Expanded(
             child: productsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -42,7 +64,7 @@ class SearchPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              data: (products) {
+              data: (List<Product> products) {
                 if (products.isEmpty) {
                   return const Center(
                     child: Padding(
@@ -52,6 +74,14 @@ class SearchPage extends ConsumerWidget {
                         textAlign: TextAlign.center,
                       ),
                     ),
+                  );
+                }
+
+                if (_isMapView) {
+                  return SearchMapView(
+                    products: products,
+                    centerLatitude: userLat,
+                    centerLongitude: userLng,
                   );
                 }
 
@@ -74,6 +104,48 @@ class SearchPage extends ConsumerWidget {
                     );
                   },
                 );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadiusSlider extends ConsumerWidget {
+  const _RadiusSlider({required this.filters});
+
+  final ProductFilters filters;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentRadius = filters.radiusInKm ?? 50.0;
+    final double? userLat = filters.userLatitude;
+    final double? userLng = filters.userLongitude;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text('Radio: ${currentRadius.round()} km'),
+          Expanded(
+            child: Slider(
+              value: currentRadius,
+              min: 5,
+              max: 150,
+              divisions: 29,
+              label: '${currentRadius.round()} km',
+              onChanged: (double value) {
+                if (userLat != null && userLng != null) {
+                  ref
+                      .read(productFiltersProvider.notifier)
+                      .setGeoFilter(
+                        latitude: userLat,
+                        longitude: userLng,
+                        radiusInKm: value,
+                      );
+                }
               },
             ),
           ),
@@ -111,6 +183,7 @@ class _FilterChips extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(productFiltersProvider.notifier);
+    final bool hasGeo = filters.userLatitude != null;
 
     return SizedBox(
       height: 50,
@@ -118,7 +191,30 @@ class _FilterChips extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         children: [
-          // Filtros por Tipo de Trueque
+          Padding(
+            key: const Key('geo_filter_chip'),
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              avatar: const Icon(Icons.gps_fixed, size: 16),
+              selected: hasGeo,
+              label: const Text('Cerca de mí'),
+              onSelected: (bool selected) async {
+                if (selected) {
+                  final position = await LocationService().getCurrentLocation();
+                  if (position != null) {
+                    notifier.setGeoFilter(
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                      radiusInKm: 50.0,
+                    );
+                  }
+                } else {
+                  notifier.clearGeoFilter();
+                }
+              },
+            ),
+          ),
+          const VerticalDivider(width: 16, indent: 8, endIndent: 8),
           for (final type in TradeType.values)
             Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -130,10 +226,7 @@ class _FilterChips extends ConsumerWidget {
                 ),
               ),
             ),
-
           const VerticalDivider(width: 16, indent: 8, endIndent: 8),
-
-          // Filtros por Categoría
           for (final cat in _availableCategories)
             Padding(
               padding: const EdgeInsets.only(right: 8),

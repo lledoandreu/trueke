@@ -1,9 +1,12 @@
+import 'package:image_picker/image_picker.dart';
 import '../../../models/product.dart';
 
-import 'package:image_picker/image_picker.dart';
-
 abstract class ProductRepository {
-  Future<List<Product>> getProducts();
+  Future<List<Product>> getProducts({
+    double? userLatitude,
+    double? userLongitude,
+    double? radiusInKm,
+  });
 
   Future<Product?> getProductById(String id);
 

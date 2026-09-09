@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/models/product.dart';
 import 'package:trueke/features/products/providers/products_provider.dart';
+import '../../core/services/location_service.dart';
 
 class _ImagePreview extends StatelessWidget {
   const _ImagePreview({required this.image, required this.onRemove});
@@ -74,6 +75,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   String _condition = 'Buen estado';
   TradeType _tradeType = TradeType.trade;
   bool _isSaving = false;
+  double? _latitude;
+  double? _longitude;
   final List<XFile> _selectedImages = [];
   final List<String> _existingImages = [];
   final List<String> _removedImages = [];
@@ -94,6 +97,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       _category = product.category;
       _condition = product.condition;
       _tradeType = product.tradeType;
+      _latitude = product.latitude;
+      _longitude = product.longitude;
     }
   }
 
@@ -131,6 +136,26 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
 
   void _removeSelectedImage(XFile image) =>
       setState(() => _selectedImages.remove(image));
+
+  Future<void> _getCurrentLocation() async {
+    final position = await LocationService().getCurrentLocation();
+    if (position != null && mounted) {
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationController.text = 'Ubicación GPS establecida';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coordenadas GPS obtenidas con éxito.')),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudieron obtener las coordenadas GPS.'),
+        ),
+      );
+    }
+  }
 
   Future<void> _publish() async {
     if (!_formKey.currentState!.validate()) return;
@@ -175,6 +200,8 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         description: _descriptionController.text.trim(),
         wanted: _wantedController.text.trim(),
         createdAt: existingProduct?.createdAt ?? DateTime.now(),
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (existingProduct == null) {
@@ -240,118 +267,149 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                           v == null || v.trim().isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _locationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Ubicación (Ciudad o Zona)',
+                            ),
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Requerido'
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.my_location),
+                          onPressed: _getCurrentLocation,
+                          tooltip: 'Usar GPS actual',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      initialValue: _categories.contains(_category)
-                          ? _category
-                          : 'Otros',
+                      initialValue: _category,
                       decoration: const InputDecoration(labelText: 'Categoría'),
                       items: _categories
                           .map(
                             (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _category = val);
+                      onChanged: (v) {
+                        if (v != null) setState(() => _category = v);
                       },
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      initialValue: _conditions.contains(_condition)
-                          ? _condition
-                          : 'Usado',
-                      decoration: const InputDecoration(labelText: 'Estado'),
+                      initialValue: _condition,
+                      decoration: const InputDecoration(
+                        labelText: 'Estado del producto',
+                      ),
                       items: _conditions
                           .map(
                             (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _condition = val);
+                      onChanged: (v) {
+                        if (v != null) setState(() => _condition = v);
                       },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _wantedController,
-                      decoration: const InputDecoration(
-                        labelText: '¿Qué buscas?',
-                      ),
-                      maxLines: 2,
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<TradeType>(
                       initialValue: _tradeType,
                       decoration: const InputDecoration(
-                        labelText: 'Tipo de trueque',
+                        labelText: 'Tipo de intercambio',
                       ),
                       items: TradeType.values
                           .map(
-                            (t) =>
-                                DropdownMenuItem(value: t, child: Text(t.name)),
+                            (t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(
+                                t == TradeType.trade
+                                    ? 'Trueque'
+                                    : t == TradeType.sale
+                                    ? 'Venta'
+                                    : 'Trueque + €',
+                              ),
+                            ),
                           )
                           .toList(),
-                      onChanged: (val) =>
-                          setState(() => _tradeType = val ?? TradeType.trade),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _tradeType = v);
+                      },
                     ),
                     if (_tradeType != TradeType.trade) ...[
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _priceController,
                         decoration: const InputDecoration(
-                          labelText: 'Precio estimado (€)',
+                          labelText: 'Precio (€)',
                         ),
                         keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (_tradeType == TradeType.trade) return null;
-                          final parsed = double.tryParse(
-                            (value ?? '').trim().replaceAll(',', '.'),
-                          );
-                          return parsed == null || parsed <= 0
-                              ? 'Introduce un precio mayor que cero'
-                              : null;
-                        },
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Requerido' : null,
                       ),
                     ],
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: _locationController,
-                      decoration: const InputDecoration(labelText: 'Ubicación'),
-                      validator: (v) =>
-                          v == null || v.trim().isEmpty ? 'Requerido' : null,
-                    ),
-                    const SizedBox(height: 24),
-                    if (_existingImages.isNotEmpty ||
-                        _selectedImages.isNotEmpty) ...[
-                      SizedBox(
-                        height: 104,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            for (final url in _existingImages)
-                              _ImagePreview(
-                                image: NetworkImage(url),
-                                onRemove: () => _removeExistingImage(url),
-                              ),
-                            for (final image in _selectedImages)
-                              _ImagePreview(
-                                image: FileImage(File(image.path)),
-                                onRemove: () => _removeSelectedImage(image),
-                              ),
-                          ],
-                        ),
+                      controller: _wantedController,
+                      decoration: const InputDecoration(
+                        labelText: '¿Qué buscas a cambio? (Opcional)',
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                    OutlinedButton.icon(
-                      onPressed: _pickImages,
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Fotos'),
                     ),
                     const SizedBox(height: 24),
-                    FilledButton(
+                    const Text(
+                      'Imágenes del artículo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 96,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          GestureDetector(
+                            onTap: _pickImages,
+                            child: Container(
+                              width: 96,
+                              height: 96,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.add_a_photo, size: 32),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ..._existingImages.map(
+                            (url) => _ImagePreview(
+                              image: NetworkImage(url),
+                              onRemove: () => _removeExistingImage(url),
+                            ),
+                          ),
+                          ..._selectedImages.map(
+                            (file) => _ImagePreview(
+                              image: FileImage(File(file.path)),
+                              onRemove: () => _removeSelectedImage(file),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
                       onPressed: _publish,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: Text(
                         widget.product == null
-                            ? 'Publicar artículo'
+                            ? 'Publicar anuncio'
                             : 'Guardar cambios',
                       ),
                     ),
