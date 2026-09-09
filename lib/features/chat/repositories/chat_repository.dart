@@ -1,13 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../models/chat_conversation.dart';
 import '../../../models/chat_message.dart';
 import '../../../models/product.dart';
 import '../../auth/auth_service.dart';
 
 class ChatRepository {
-  ChatRepository([SupabaseClient? client])
-    : _client = client ?? Supabase.instance.client;
+  ChatRepository(this._client);
 
   final SupabaseClient _client;
 
@@ -15,7 +13,7 @@ class ChatRepository {
   static const _messages = 'messages';
 
   Future<List<ChatConversation>> getConversations() async {
-    final userId = AuthService.currentUserId;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) {
       return [];
     }
@@ -40,7 +38,7 @@ class ChatRepository {
     required Product product,
     required String message,
   }) async {
-    final userId = AuthService.currentUserId;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) {
       throw StateError('Debes iniciar sesión para enviar un mensaje.');
     }
@@ -72,7 +70,6 @@ class ChatRepository {
         .single();
 
     final conversationId = inserted['id'] as String;
-
     await addMessage(conversationId: conversationId, text: message);
 
     return conversationId;
@@ -82,7 +79,7 @@ class ChatRepository {
     required String conversationId,
     required String text,
   }) async {
-    final userId = AuthService.currentUserId;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) {
       throw StateError('Debes iniciar sesión para enviar un mensaje.');
     }
@@ -99,9 +96,8 @@ class ChatRepository {
     });
   }
 
-  /// Escucha en tiempo real los mensajes de una conversación mediante Supabase Streams.
   Stream<List<ChatMessage>> streamMessages(String conversationId) {
-    final userId = AuthService.currentUserId;
+    final userId = _client.auth.currentUser?.id;
 
     return _client
         .from(_messages)
@@ -113,38 +109,5 @@ class ChatRepository {
               .map((json) => ChatMessage.fromJson(json, currentUserId: userId))
               .toList(),
         );
-  }
-
-  RealtimeChannel subscribeToMessages({
-    required String conversationId,
-    required void Function(ChatMessage message) onMessage,
-  }) {
-    return _client
-        .channel('conversation:$conversationId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: _messages,
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'conversation_id',
-            value: conversationId,
-          ),
-          callback: (payload) {
-            final userId = AuthService.currentUserId;
-
-            final message = ChatMessage.fromJson(
-              payload.newRecord,
-              currentUserId: userId,
-            );
-
-            onMessage(message);
-          },
-        )
-        .subscribe();
-  }
-
-  Future<void> unsubscribe(RealtimeChannel channel) async {
-    await _client.removeChannel(channel);
   }
 }
