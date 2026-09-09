@@ -8,6 +8,7 @@ import '../../features/trades/send_trade_offer_page.dart';
 import '../../features/matches/matches_page.dart';
 import '../../features/profile/views/reviews_page.dart';
 import '../../features/profile/views/write_review_page.dart';
+import '../../features/transactions/views/transactions_tabs_page.dart';
 import '../../models/product.dart';
 import '../routes/app_routes.dart';
 
@@ -49,6 +50,10 @@ class AppRouter {
         final receiverId = settings.arguments as String;
         return MaterialPageRoute<void>(
           builder: (_) => WriteReviewPage(receiverId: receiverId),
+        );
+      case AppRoutes.activity:
+        return MaterialPageRoute<void>(
+          builder: (_) => const TransactionsTabsPage(),
         );
       default:
         return _notFoundRoute();

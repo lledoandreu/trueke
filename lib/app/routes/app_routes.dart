@@ -9,4 +9,5 @@ class AppRoutes {
   static const matches = '/matches';
   static const reviews = '/reviews';
   static const writeReview = '/write-review';
+  static const activity = '/activity';
 }
