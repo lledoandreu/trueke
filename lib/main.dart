@@ -6,19 +6,21 @@ import 'package:trueke/app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Cargar variables de entorno
   await dotenv.load(fileName: '.env');
-  
+
   // Inicializar Supabase usando las claves del archivo .env
   await Supabase.initialize(
-    url: dotenv.get('SUPABASE_URL', fallback: dotenv.get('NEXT_PUBLIC_SUPABASE_URL', fallback: '')),
-    publishableKey: dotenv.get('SUPABASE_ANON_KEY', fallback: dotenv.get('NEXT_PUBLIC_SUPABASE_ANON_KEY', fallback: '')),
-  );
-
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
+    url: dotenv.get(
+      'SUPABASE_URL',
+      fallback: dotenv.get('NEXT_PUBLIC_SUPABASE_URL', fallback: ''),
+    ),
+    publishableKey: dotenv.get(
+      'SUPABASE_ANON_KEY',
+      fallback: dotenv.get('NEXT_PUBLIC_SUPABASE_ANON_KEY', fallback: ''),
     ),
   );
+
+  runApp(const ProviderScope(child: MyApp()));
 }

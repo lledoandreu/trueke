@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final aiChatProvider = NotifierProvider<AiChatNotifier, List<dynamic>>(AiChatNotifier.new);
+final aiChatProvider = NotifierProvider<AiChatNotifier, List<dynamic>>(
+  AiChatNotifier.new,
+);
 
 class AiChatNotifier extends Notifier<List<dynamic>> {
   @override
@@ -18,7 +20,7 @@ class AiChatNotifier extends Notifier<List<dynamic>> {
   Future<void> sendUserMessage(String message) async {
     // Añade el mensaje del usuario al estado de forma local
     addMessage({"role": "user", "content": message});
-    
+
     // Aquí puedes añadir la lógica futura con tu repositorio de IA o Supabase
   }
 }

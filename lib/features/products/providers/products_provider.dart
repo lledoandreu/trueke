@@ -5,9 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'product_repository_provider.dart';
 import 'package:trueke/models/product.dart';
 
-final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(() {
-  return ProductsNotifier();
-});
+final productsProvider = AsyncNotifierProvider<ProductsNotifier, List<Product>>(
+  () {
+    return ProductsNotifier();
+  },
+);
 
 final myProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final productsAsync = ref.watch(productsProvider);
@@ -51,7 +53,9 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
 
   Future<String> uploadProductImage(XFile image) async {
     try {
-      return await ref.read(productRepositoryProvider).uploadProductImage(image);
+      return await ref
+          .read(productRepositoryProvider)
+          .uploadProductImage(image);
     } catch (e) {
       throw Exception('Error al subir imagen: $e');
     }

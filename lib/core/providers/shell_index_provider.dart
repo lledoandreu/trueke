@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final shellIndexProvider = NotifierProvider<ShellIndexNotifier, int>(ShellIndexNotifier.new);
+final shellIndexProvider = NotifierProvider<ShellIndexNotifier, int>(
+  ShellIndexNotifier.new,
+);
 
 class ShellIndexNotifier extends Notifier<int> {
   @override

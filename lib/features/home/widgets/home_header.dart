@@ -15,7 +15,11 @@ class HomeHeader extends ConsumerWidget {
         children: [
           const Text(
             'Trueke App',
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.chat, color: Colors.white),

@@ -20,11 +20,15 @@ class ChatPage extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final message = chatMessages[index];
                 final isUser = message is Map && message['role'] == 'user';
-                final content = message is Map ? (message['content']?.toString() ?? '') : '';
+                final content = message is Map
+                    ? (message['content']?.toString() ?? '')
+                    : '';
 
                 return ListTile(
                   title: Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: Container(
                       padding: const EdgeInsets.all(8.0),
                       color: isUser ? Colors.blue[100] : Colors.grey[200],
@@ -42,14 +46,18 @@ class ChatPage extends ConsumerWidget {
                 Expanded(
                   child: TextField(
                     controller: textController,
-                    decoration: const InputDecoration(hintText: 'Pregunta algo sobre un trueque...'),
+                    decoration: const InputDecoration(
+                      hintText: 'Pregunta algo sobre un trueque...',
+                    ),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () {
                     if (textController.text.trim().isNotEmpty) {
-                      ref.read(aiChatProvider.notifier).sendUserMessage(textController.text.trim());
+                      ref
+                          .read(aiChatProvider.notifier)
+                          .sendUserMessage(textController.text.trim());
                       textController.clear();
                     }
                   },

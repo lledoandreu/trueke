@@ -10,14 +10,9 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Trueke',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       // Inyectamos la página correspondiente dentro del contenedor de la Shell
-      home: const MainShell(
-        child: HomePage(), 
-      ),
+      home: const MainShell(child: HomePage()),
     );
   }
 }

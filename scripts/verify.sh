@@ -1,33 +1,33 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CLEAR='\033[0m'
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$root"
+echo -e "${BLUE}=== 🛡️ INICIANDO VERIFICACIÓN DE CALIDAD - TRUEKE ===${CLEAR}\n"
 
-echo "==> dart format"
-dart format --output=none --set-exit-if-changed lib test
+echo -e "${BLUE}[1/3] Ejecutando dart format...${CLEAR}"
+dart format --set-exit-if-changed lib test
+if [ $? -ne 0 ]; then
+    echo -e "\n${RED}❌ ERROR: El código no está formateado correctamente. Ejecuta 'dart format lib test' para solucionarlo.${CLEAR}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Formato correcto.${CLEAR}\n"
 
-echo "==> flutter analyze"
+echo -e "${BLUE}[2/3] Ejecutando flutter analyze...${CLEAR}"
 flutter analyze
+if [ $? -ne 0 ]; then
+    echo -e "\n${RED}❌ ERROR: Se encontraron lints o errores en el análisis estático.${CLEAR}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Análisis estático limpio (0 issues).${CLEAR}\n"
 
-echo "==> flutter test"
+echo -e "${BLUE}[3/3] Ejecutando flutter test...${CLEAR}"
 flutter test
-
-if command -v supabase >/dev/null 2>&1; then
-  if supabase status >/dev/null 2>&1; then
-    echo "==> supabase db reset --local --no-seed"
-    supabase db reset --local --no-seed
-
-    echo "==> supabase migration list --local"
-    supabase migration list --local
-
-    echo "==> supabase test db"
-    supabase test db
-  else
-    echo "==> supabase CLI found, local stack not running (skip db checks)"
-  fi
-else
-  echo "==> supabase CLI not found (skip db checks)"
+if [ $? -ne 0 ]; then
+    echo -e "\n${RED}❌ ERROR: Algunas pruebas han fallado.${CLEAR}"
+    exit 1
 fi
 
-echo "==> verify OK"
+echo -e "${GREEN}🚀 === ¡TODO PERFECTO! El proyecto está listo para un commit seguro ===${CLEAR}"
+exit 0

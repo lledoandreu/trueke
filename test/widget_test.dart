@@ -4,10 +4,6 @@ import 'package:trueke/app/app.dart';
 
 void main() {
   testWidgets('Counter smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
   });
 }
