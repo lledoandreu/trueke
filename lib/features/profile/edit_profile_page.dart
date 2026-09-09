@@ -1,3 +1,4 @@
+import 'package:trueke/core/supabase/supabase_client.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/storage_service.dart';
 import '../../models/profile.dart';
-import '../auth/auth_service.dart';
 import 'providers/profile_provider.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -68,7 +68,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       String? avatarUrl = widget.profile.avatarUrl;
 
       if (_avatarFile != null) {
-        final storage = StorageService(AuthService.supabase);
+        final storage = StorageService(ref.read(supabaseClientProvider));
 
         avatarUrl = await storage.uploadAvatar(
           file: _avatarFile!,
