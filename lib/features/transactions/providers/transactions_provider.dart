@@ -1,31 +1,45 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/supabase/supabase_client.dart';
-import '../../../features/auth/auth_service.dart';
-import '../models/notification_model.dart';
-import '../models/transaction_history_model.dart';
-import '../repositories/transaction_repository.dart';
+import 'package:trueke/features/search/providers/search_repository_provider.dart';
+import 'package:trueke/features/transactions/models/trade_transaction.dart';
+import 'package:trueke/features/transactions/repositories/transactions_repository.dart';
+import 'package:trueke/features/transactions/repositories/supabase_transactions_repository.dart';
 
-final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
+final transactionsRepositoryProvider = Provider<TransactionsRepository>((ref) {
   final client = ref.watch(supabaseClientProvider);
-  return TransactionRepository(client);
+  return SupabaseTransactionsRepository(client);
 });
 
-final transactionHistoryProvider =
-    FutureProvider.autoDispose<List<TransactionHistory>>((ref) async {
-      final repository = ref.watch(transactionRepositoryProvider);
-      final userId = AuthService.currentUser?.id;
-      if (userId == null) {
-        return [];
-      }
-      return repository.getTransactionHistory(userId);
-    });
+class UserTransactionsNotifier extends AsyncNotifier<List<TradeTransaction>> {
+  final String userId;
 
-final notificationsProvider =
-    FutureProvider.autoDispose<List<NotificationModel>>((ref) async {
-      final repository = ref.watch(transactionRepositoryProvider);
-      final userId = AuthService.currentUser?.id;
-      if (userId == null) {
-        return [];
-      }
-      return repository.getNotifications(userId);
+  UserTransactionsNotifier(this.userId);
+
+  @override
+  Future<List<TradeTransaction>> build() async {
+    final repository = ref.watch(transactionsRepositoryProvider);
+    return repository.getUserTransactions(userId);
+  }
+
+  Future<void> changeStatus(String transactionId, String newStatus) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(transactionsRepositoryProvider);
+      await repository.updateTransactionStatus(transactionId, newStatus);
+      return repository.getUserTransactions(userId);
     });
+  }
+
+  Future<void> proposeTrade(TradeTransaction transaction) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(transactionsRepositoryProvider);
+      await repository.createTransaction(transaction);
+      return repository.getUserTransactions(userId);
+    });
+  }
+}
+
+final userTransactionsProvider = AsyncNotifierProvider.autoDispose
+    .family<UserTransactionsNotifier, List<TradeTransaction>, String>(
+      UserTransactionsNotifier.new,
+    );
