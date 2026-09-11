@@ -30,6 +30,9 @@ jobs:
       - name: Instalar Dependencias
         run: flutter pub get
 
+      - name: Crear archivo .env ficticio para validacion
+        run: touch .env
+
       - name: Validar Formateo
         run: dart format --output=none --set-exit-if-changed .
 
