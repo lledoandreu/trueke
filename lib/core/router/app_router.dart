@@ -17,8 +17,7 @@ class AppRouter {
     switch (routeSettings.name) {
       case home:
         return MaterialPageRoute(
-          builder: (_) =>
-              const Scaffold(body: Center(child: Text('Home Trueke'))),
+          builder: (_) => const ProfileScreen(userId: ''),
         );
       case profile:
         final userId = routeSettings.arguments as String? ?? '';
