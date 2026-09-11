@@ -8,11 +8,11 @@ on:
 
 jobs:
   analyze_and_test:
-    name: Analizar, Probar y Validar Android
+    name: Analizar Probar y Validar Android
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar Código
+      - name: Descargar Codigo
         uses: actions/checkout@v4
 
       - name: Configurar Java
@@ -33,7 +33,7 @@ jobs:
       - name: Validar Formateo
         run: dart format --output=none --set-exit-if-changed .
 
-      - name: Análisis Estático
+      - name: Analisis Estatico
         run: flutter analyze
 
       - name: Ejecutar Tests Automatizados
