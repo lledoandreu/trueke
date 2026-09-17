@@ -6,87 +6,60 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 jobs:
   analyze_and_test:
-    name: Analizar Probar y Validar Android
+    name: Fase 1 - Analizar, Probar y Validar
     runs-on: ubuntu-latest
-
     steps:
-      - name: Descargar Codigo
+      - name: Descargar codigo del repositorio
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Configurar Java
-        uses: actions/setup-java@v5
+      - name: Configurar Entorno Java JDK
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Configurar Flutter
+      - name: Configurar Entorno Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Instalar Dependencias
+      - name: Instalar Dependencias del Proyecto
         run: flutter pub get
 
-      - name: Crear archivo .env ficticio para validacion
-        run: touch .env
-
-      - name: Validar Formateo
+      - name: Validar Formato de Codigo
         run: dart format --output=none --set-exit-if-changed .
 
-      - name: Analisis Estatico
+      - name: Analisis Estatico de Codigo
         run: flutter analyze
 
-      - name: Ejecutar Tests Automatizados
+      - name: Ejecutar Suite de Tests Automatizados
         run: flutter test
 
-  build_android:
-    name: Compilar y Firmar Android App Bundle (Produccion)
+  build_and_sign_android:
+    name: Fase 2 - Compilar y Firmar Android App Bundle
     needs: analyze_and_test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Descargar Codigo
+      - name: Descargar codigo del repositorio
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Configurar Java
-        uses: actions/setup-java@v5
+      - name: Configurar Entorno Java JDK
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Configurar Flutter
+      - name: Configurar Entorno Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Instalar Dependencias de Flutter
+      - name: Instalar Dependencias del Proyecto
         run: flutter pub get
-
-      - name: Descargar artefactos y herramientas de Android
-        run: flutter precache --android
-
-      - name: Inyectar variables de entorno de Supabase
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-
-      - name: Inyectar Man希esto Remoto Inquebrantable con Printf
-        run: |
-          rm -f android/app/src/main/AndroidManifest.xml
-          printf '<manifest xmlns:android="http://android.com">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <application android:label="trueke" android:name="${applicationName}" android:icon="@mipmap/ic_launcher">\n        <activity android:name="io.flutter.embedding.android.FlutterActivity" android:exported="true" android:launchMode="singleTop" android:taskAffinity="" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">\n            <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme" />\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN"/>\n                <category android:name="android.intent.category.LAUNCHER"/>\n            </intent-filter>\n        </activity>\n        <meta-data android:name="flutterEmbedding" android:value="2" />\n    </application>\n    <queries>\n        <intent>\n            <action android:name="android.intent.action.PROCESS_TEXT"/>\n            <data android:mimeType="text/plain"/>\n        </intent>\n    </queries>\n</manifest>\n' > android/app/src/main/AndroidManifest.xml
-          chmod 644 android/app/src/main/AndroidManifest.xml
 
       - name: Preparar y Decodificar Keystore de Produccion
         run: |
