@@ -82,13 +82,13 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
-      - name: Compilar Android App Bundle (.aab) con Auto-Incremento y Firma Inyectada
+      - name: Compilar Android App Bundle (.aab) con Auto-Incremento y Firma Nativa
         run: |
-          flutter build appbundle --release \
-            --build-number=$GITHUB_RUN_NUMBER \
-            --dart-define=STORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}" \
-            --dart-define=KEY_ALIAS="${{ secrets.KEY_ALIAS }}" \
-            --dart-define=KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
+          flutter build appbundle --release --build-number=$GITHUB_RUN_NUMBER
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Almacenar Bundle de Produccion Compilado (.aab)
         uses: actions/upload-artifact@v4
