@@ -1,29 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/core/providers/shell_index_provider.dart';
+import 'package:trueke/features/home/home_page.dart';
+import 'package:trueke/features/auth/providers/auth_provider.dart';
+import 'package:trueke/features/profile/presentation/screens/profile_screen.dart';
+import 'package:trueke/features/products/publish_product_page.dart';
 
 class MainShell extends ConsumerWidget {
-  final Widget child;
+  final Widget? child;
 
-  const MainShell({super.key, required this.child});
+  const MainShell({super.key, this.child});
+
+  void _navigateToPublish(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const PublishProductPage()));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(shellIndexProvider);
+    final user = ref.watch(currentUserProvider);
+    final userId = user?.id ?? '';
+
+    final List<Widget> screens = [
+      const HomePage(),
+      const Scaffold(
+        body: Center(child: Text('Pantalla de Chats (Proximamente)')),
+      ),
+      const Scaffold(
+        body: Center(child: Text('Pantalla de Favoritos (Proximamente)')),
+      ),
+      ProfileScreen(userId: userId),
+    ];
 
     return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
+      body: IndexedStack(index: currentIndex, children: screens),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToPublish(context),
+        tooltip: 'Publicar Producto',
+        child: const Icon(Icons.camera_alt),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
           ref.read(shellIndexProvider.notifier).setIndex(index);
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chats'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Inicio',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Chats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_border),
+            selectedIcon: Icon(Icons.favorite),
             label: 'Favoritos',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ],
       ),
