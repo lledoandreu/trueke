@@ -1,0 +1,83 @@
+name: Flutter CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze_and_test:
+    name: Analizar Probar y Validar Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar Codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependencias
+        run: flutter pub get
+
+      - name: Crear archivo .env ficticio para validacion
+        run: touch .env
+
+      - name: Validar Formateo
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analisis Estatico
+        run: flutter analyze
+
+      - name: Ejecutar Tests Automatizados
+        run: flutter test
+
+  build_android:
+    name: Compilar Android App Bundle (Production)
+    needs: analyze_and_test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar Codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependencias
+        run: flutter pub get
+
+      - name: Inyectar variables de entorno reales
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
+      - name: Compilar Android App Bundle (.aab)
+        run: flutter build appbundle --release
+
+      - name: Almacenar Artefacto Compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: trueke-release-appbundle
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 7
