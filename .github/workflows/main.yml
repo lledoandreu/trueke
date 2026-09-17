@@ -43,7 +43,7 @@ jobs:
         run: flutter test
 
   build_android:
-    name: Compilar Android App Bundle (Production)
+    name: Compilar Android APK (Testing)
     needs: analyze_and_test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -72,12 +72,12 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Compilar Android App Bundle (.aab) en modo Debug
-        run: flutter build appbundle --debug --no-pub --no-validate-project
+      - name: Compilar Android APK en modo Debug
+        run: flutter build apk --debug --no-pub --no-validate-project
 
       - name: Almacenar Artefacto Compilado
         uses: actions/upload-artifact@v4
         with:
-          name: trueke-debug-appbundle
-          path: build/app/outputs/bundle/debug/app-debug.aab
+          name: trueke-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
