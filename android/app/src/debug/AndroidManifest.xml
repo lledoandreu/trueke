@@ -1,4 +1,4 @@
 <manifest xmlns:android="http://android.com">
     <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>
-<!-- Manifest Debug Stable -->
+<!-- Manifest Debug Release Approved -->
