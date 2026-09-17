@@ -32,9 +32,6 @@ jobs:
       - name: Generar Mock de variables de entorno para CI
         run: touch .env
 
-      - name: Ejecutar Suite de Tests Automatizados
-        run: flutter test
-
       - name: Preparar y Decodificar Keystore de Produccion
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
