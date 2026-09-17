@@ -30,4 +30,4 @@
         </intent>
     </queries>
 </manifest>
-<!-- Force CI Pipeline Rebuild -->
+<!-- Deploy Ref: 2026-09-17-Production-Fix -->
