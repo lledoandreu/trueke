@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/providers/favorites_provider.dart';
+import '../../presentation/providers/favorite_provider.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
-import 'package:trueke/features/chat/chat_detail_page.dart';
-import '../chat/providers/chat_provider.dart';
+import 'package:trueke/features/chats/presentation/chat_detail_page.dart';
+import 'package:trueke/features/chats/providers/chat_providers.dart';
 import 'widgets/product_description.dart';
 import 'widgets/product_gallery.dart';
 import 'widgets/product_info.dart';
@@ -36,22 +36,38 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
       return;
     }
 
+    final currentUserId = AuthService.currentUserId;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicia sesión para poder chatear.')),
+      );
+      return;
+    }
+
     setState(() => _isStartingChat = true);
 
     try {
-      final conversationId = await ref
-          .read(chatProvider.notifier)
-          .startConversation(
-            product: widget.product,
-            message:
-                '¡Hola! Me interesa tu artículo "${widget.product.title}".',
-          );
+      final chatRepo = ref.read(chatRepositoryProvider);
+
+      // Obtiene o crea el chat usando el repositorio definitivo del módulo moderno
+      final chatEntity = await chatRepo.getOrCreateChat(
+        productId: widget.product.id,
+        sellerId: widget.product.ownerId ?? '',
+        buyerId: currentUserId,
+      );
+
+      // Envía el mensaje inicial automatizado si la sala es nueva o por cortesía
+      await chatRepo.sendMessage(
+        chatId: chatEntity.id,
+        senderId: currentUserId,
+        text: '¡Hola! Me interesa tu artículo "${widget.product.title}".',
+      );
 
       if (!mounted) return;
 
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => ChatDetailPage(conversationId: conversationId),
+          builder: (_) => ChatDetailPage(chat: chatEntity),
         ),
       );
     } catch (e) {
@@ -83,9 +99,11 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isFav = ref
-        .watch(favoritesProvider.notifier)
-        .isFavorite(widget.product);
+    final userId = ref.watch(authUserIdProvider).value;
+    final favoriteIdsAsync = userId != null
+        ? ref.watch(favoriteIdsProvider(userId))
+        : const AsyncValue<List<String>>.data([]);
+    final isFav = favoriteIdsAsync.value?.contains(widget.product.id) ?? false;
 
     return Scaffold(
       body: CustomScrollView(
@@ -115,8 +133,19 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,
-        onPressed: () =>
-            ref.read(favoritesProvider.notifier).toggleFavorite(widget.product),
+        onPressed: () async {
+          if (userId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Inicia sesión para guardar favoritos.'),
+              ),
+            );
+            return;
+          }
+          await ref
+              .read(favoriteNotifierProvider.notifier)
+              .toggle(userId, widget.product.id, !isFav);
+        },
         child: Icon(
           isFav ? Icons.favorite : Icons.favorite_border,
           color: isFav ? Colors.red : Colors.grey,

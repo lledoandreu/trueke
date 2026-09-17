@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/profile/models/user_profile.dart';
 import 'package:trueke/features/profile/providers/profile_provider.dart';
 
@@ -80,6 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           profileAsync.when(
             data: (profile) => IconButton(
               icon: Icon(_isEditing ? Icons.close : Icons.edit),
+              tooltip: _isEditing ? 'Cancelar edición' : 'Editar perfil',
               onPressed: mutationState.isLoading
                   ? null
                   : () {
@@ -91,6 +93,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             loading: () => const SizedBox.shrink(),
             error: (error, stackTrace) => const SizedBox.shrink(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            tooltip: 'Cerrar sesión',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Cerrar sesión'),
+                  content: const Text(
+                    '¿Estás seguro de que quieres salir de Trueke?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Salir'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await AuthService.signOut();
+              }
+            },
           ),
         ],
       ),

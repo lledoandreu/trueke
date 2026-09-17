@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/models/product.dart';
-import 'package:trueke/features/products/providers/products_provider.dart';
+import 'package:trueke/features/products/providers/publish_product_provider.dart';
 import '../../core/services/location_service.dart';
 
 class _ImagePreview extends StatelessWidget {
@@ -74,12 +74,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
   String _category = 'Electrónica';
   String _condition = 'Buen estado';
   TradeType _tradeType = TradeType.trade;
-  bool _isSaving = false;
   double? _latitude;
   double? _longitude;
   final List<XFile> _selectedImages = [];
   final List<String> _existingImages = [];
-  final List<String> _removedImages = [];
 
   @override
   void initState() {
@@ -99,6 +97,10 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       _tradeType = product.tradeType;
       _latitude = product.latitude;
       _longitude = product.longitude;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _getCurrentLocation();
+      });
     }
   }
 
@@ -121,44 +123,47 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
         for (final image in images) {
           if (!_selectedImages.any((selected) => selected.path == image.path)) {
             _selectedImages.add(image);
+            ref
+                .read(publishProductNotifierProvider.notifier)
+                .setImage(File(image.path));
           }
         }
       });
     }
   }
 
-  void _removeExistingImage(String url) {
+  void _removeSelectedImage(XFile image) {
     setState(() {
-      _existingImages.remove(url);
-      if (!_removedImages.contains(url)) _removedImages.add(url);
+      _selectedImages.remove(image);
+      if (_selectedImages.isEmpty) {
+        ref.read(publishProductNotifierProvider.notifier).clearImage();
+      } else {
+        ref
+            .read(publishProductNotifierProvider.notifier)
+            .setImage(File(_selectedImages.first.path));
+      }
     });
   }
 
-  void _removeSelectedImage(XFile image) =>
-      setState(() => _selectedImages.remove(image));
-
   Future<void> _getCurrentLocation() async {
-    final position = await LocationService().getCurrentLocation();
-    if (position != null && mounted) {
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-        _locationController.text = 'Ubicación GPS establecida';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coordenadas GPS obtenidas con éxito.')),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudieron obtener las coordenadas GPS.'),
-        ),
-      );
-    }
+    try {
+      final position = await LocationService().getCurrentLocation();
+      if (position != null && mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          if (_locationController.text.isEmpty ||
+              _locationController.text == 'Ubicación GPS establecida') {
+            _locationController.text = 'Ubicación GPS establecida';
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _publish() async {
     if (!_formKey.currentState!.validate()) return;
+
     final price = double.tryParse(
       _priceController.text.trim().replaceAll(',', '.'),
     );
@@ -168,81 +173,61 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       );
       return;
     }
+
     final currentUserId = AuthService.currentUserId;
-    if (currentUserId == null) return;
-
-    setState(() => _isSaving = true);
-    final uploadedImages = <String>[];
-    var persistenceCompleted = false;
-
-    try {
-      final existingProduct = widget.product;
-      for (final image in _selectedImages) {
-        final url = await ref
-            .read(productsProvider.notifier)
-            .uploadProductImage(image);
-        if (!uploadedImages.contains(url)) uploadedImages.add(url);
-      }
-      final allImages = <String>[..._existingImages, ...uploadedImages];
-      final product = Product(
-        id:
-            existingProduct?.id ??
-            DateTime.now().microsecondsSinceEpoch.toString(),
-        title: _titleController.text.trim(),
-        images: allImages,
-        price: _tradeType == TradeType.trade ? null : price,
-        tradeType: _tradeType,
-        category: _category,
-        location: _locationController.text.trim(),
-        owner: existingProduct?.owner ?? AuthService.currentUserLabel,
-        ownerId: existingProduct?.ownerId ?? currentUserId,
-        condition: _condition,
-        description: _descriptionController.text.trim(),
-        wanted: _wantedController.text.trim(),
-        createdAt: existingProduct?.createdAt ?? DateTime.now(),
-        latitude: _latitude,
-        longitude: _longitude,
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes iniciar sesión para publicar.')),
       );
-
-      if (existingProduct == null) {
-        await ref.read(productsProvider.notifier).addProduct(product);
-      } else {
-        await ref.read(productsProvider.notifier).updateProduct(product);
-      }
-      persistenceCompleted = true;
-
-      for (final url in _removedImages) {
-        try {
-          await ref.read(productsProvider.notifier).deleteProductImage(url);
-        } catch (_) {}
-      }
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (error) {
-      if (!persistenceCompleted) {
-        for (final url in uploadedImages) {
-          await ref.read(productsProvider.notifier).deleteProductImage(url);
-        }
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar el anuncio: $error')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      return;
     }
+
+    await ref
+        .read(publishProductNotifierProvider.notifier)
+        .submitProduct(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: _tradeType == TradeType.trade ? null : price,
+          category: _category,
+          owner: AuthService.currentUserLabel,
+          ownerId: currentUserId,
+          condition: _condition,
+          tradeType: _tradeType,
+          wanted: _wantedController.text.trim(),
+          location: _locationController.text.trim(),
+          latitude: _latitude,
+          longitude: _longitude,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(publishProductNotifierProvider);
+
+    ref.listen<PublishProductState>(publishProductNotifierProvider, (
+      previous,
+      next,
+    ) {
+      if (next.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Producto publicado con éxito!')),
+        );
+        Navigator.pop(context);
+      }
+      if (next.errorMessage != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.product == null ? 'Publicar artículo' : 'Editar anuncio',
         ),
       ),
-      body: _isSaving
+      body: state.isPublishing
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
               child: Form(
@@ -250,11 +235,40 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    const Text(
+                      'Fotos del producto',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 96,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ..._selectedImages.map(
+                            (img) => _ImagePreview(
+                              image: FileImage(File(img.path)),
+                              onRemove: () => _removeSelectedImage(img),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _pickImages,
+                            icon: const Icon(Icons.add_a_photo, size: 32),
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size(96, 96),
+                              backgroundColor: Colors.grey.shade300,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _titleController,
                       decoration: const InputDecoration(labelText: 'Título'),
-                      validator: (v) =>
-                          v == null || v.trim().isEmpty ? 'Requerido' : null,
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -263,30 +277,9 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                         labelText: 'Descripción',
                       ),
                       maxLines: 3,
-                      validator: (v) =>
-                          v == null || v.trim().isEmpty ? 'Requerido' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _locationController,
-                            decoration: const InputDecoration(
-                              labelText: 'Ubicación (Ciudad o Zona)',
-                            ),
-                            validator: (v) => v == null || v.trim().isEmpty
-                                ? 'Requerido'
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.my_location),
-                          onPressed: _getCurrentLocation,
-                          tooltip: 'Usar GPS actual',
-                        ),
-                      ],
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
@@ -297,24 +290,18 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                             (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _category = v);
-                      },
+                      onChanged: (v) => setState(() => _category = v!),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _condition,
-                      decoration: const InputDecoration(
-                        labelText: 'Estado del producto',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Estado'),
                       items: _conditions
                           .map(
                             (c) => DropdownMenuItem(value: c, child: Text(c)),
                           )
                           .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _condition = v);
-                      },
+                      onChanged: (v) => setState(() => _condition = v!),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<TradeType>(
@@ -322,23 +309,21 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                       decoration: const InputDecoration(
                         labelText: 'Tipo de intercambio',
                       ),
-                      items: TradeType.values
-                          .map(
-                            (t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(
-                                t == TradeType.trade
-                                    ? 'Trueque'
-                                    : t == TradeType.sale
-                                    ? 'Venta'
-                                    : 'Trueque + €',
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _tradeType = v);
-                      },
+                      items: const [
+                        DropdownMenuItem(
+                          value: TradeType.trade,
+                          child: Text('Trueque puro'),
+                        ),
+                        DropdownMenuItem(
+                          value: TradeType.sale,
+                          child: Text('Venta directa'),
+                        ),
+                        DropdownMenuItem(
+                          value: TradeType.tradeAndMoney,
+                          child: Text('Trueque + dinero'),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() => _tradeType = v!),
                     ),
                     if (_tradeType != TradeType.trade) ...[
                       const SizedBox(height: 12),
@@ -347,70 +332,40 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
                         decoration: const InputDecoration(
                           labelText: 'Precio (€)',
                         ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Campo obligatorio'
+                            : null,
                       ),
                     ],
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _wantedController,
                       decoration: const InputDecoration(
-                        labelText: '¿Qué buscas a cambio? (Opcional)',
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Imágenes del artículo',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        labelText: '¿Qué buscas a cambio?',
                       ),
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: 96,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          GestureDetector(
-                            onTap: _pickImages,
-                            child: Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.add_a_photo, size: 32),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ..._existingImages.map(
-                            (url) => _ImagePreview(
-                              image: NetworkImage(url),
-                              onRemove: () => _removeExistingImage(url),
-                            ),
-                          ),
-                          ..._selectedImages.map(
-                            (file) => _ImagePreview(
-                              image: FileImage(File(file.path)),
-                              onRemove: () => _removeSelectedImage(file),
-                            ),
-                          ),
-                        ],
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        labelText: 'Ubicación',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.my_location),
+                          onPressed: _getCurrentLocation,
+                        ),
                       ),
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Campo obligatorio'
+                          : null,
                     ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
+                    const SizedBox(height: 24),
+                    FilledButton(
                       onPressed: _publish,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
                       child: Text(
-                        widget.product == null
-                            ? 'Publicar anuncio'
-                            : 'Guardar cambios',
+                        widget.product == null ? 'Publicar' : 'Guardar cambios',
                       ),
                     ),
                   ],

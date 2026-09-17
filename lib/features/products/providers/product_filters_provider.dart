@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import '../../../models/product.dart';
 import 'products_provider.dart';
 
+enum ProductSortOption { relevance, priceAsc, priceDesc, distance }
+
 class ProductFilters {
   const ProductFilters({
     this.query = '',
@@ -11,6 +13,7 @@ class ProductFilters {
     this.userLatitude,
     this.userLongitude,
     this.radiusInKm,
+    this.sortBy = ProductSortOption.relevance,
   });
 
   final String query;
@@ -19,11 +22,13 @@ class ProductFilters {
   final double? userLatitude;
   final double? userLongitude;
   final double? radiusInKm;
+  final ProductSortOption sortBy;
 
   bool get hasActiveFilters =>
       query.isNotEmpty ||
       category != null ||
       tradeType != null ||
+      sortBy != ProductSortOption.relevance ||
       (userLatitude != null && userLongitude != null && radiusInKm != null);
 
   ProductFilters copyWith({
@@ -33,6 +38,7 @@ class ProductFilters {
     double? userLatitude,
     double? userLongitude,
     double? radiusInKm,
+    ProductSortOption? sortBy,
     bool clearCategory = false,
     bool clearTradeType = false,
     bool clearGeoFilter = false,
@@ -46,6 +52,7 @@ class ProductFilters {
           ? null
           : userLongitude ?? this.userLongitude,
       radiusInKm: clearGeoFilter ? null : radiusInKm ?? this.radiusInKm,
+      sortBy: sortBy ?? this.sortBy,
     );
   }
 }
@@ -74,6 +81,10 @@ class ProductFiltersNotifier extends Notifier<ProductFilters> {
       tradeType: tradeType,
       clearTradeType: tradeType == null,
     );
+  }
+
+  void setSortOption(ProductSortOption option) {
+    state = state.copyWith(sortBy: option);
   }
 
   void setGeoFilter({
@@ -105,8 +116,9 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final filters = ref.watch(productFiltersProvider);
   final normalizedQuery = filters.query.toLowerCase();
 
-  return products.whenData(
-    (items) => items.where((product) {
+  return products.whenData((items) {
+    // 1. Aplicar Filtrado
+    final filteredList = items.where((product) {
       final matchesQuery =
           normalizedQuery.isEmpty ||
           [
@@ -142,6 +154,64 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
       }
 
       return matchesQuery && matchesCategory && matchesTradeType && matchesGeo;
-    }).toList(),
-  );
+    }).toList();
+
+    // 2. Aplicar Criterio de Ordenación (Sort)
+    switch (filters.sortBy) {
+      case ProductSortOption.relevance:
+        filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+
+      case ProductSortOption.priceAsc:
+        filteredList.sort((a, b) {
+          if (a.price == null && b.price == null) return 0;
+          if (a.price == null) return 1;
+          if (b.price == null) return -1;
+          return a.price!.compareTo(b.price!);
+        });
+        break;
+
+      case ProductSortOption.priceDesc:
+        filteredList.sort((a, b) {
+          if (a.price == null && b.price == null) return 0;
+          if (a.price == null) return 1;
+          if (b.price == null) return -1;
+          return b.price!.compareTo(a.price!);
+        });
+        break;
+
+      case ProductSortOption.distance:
+        if (filters.userLatitude != null && filters.userLongitude != null) {
+          filteredList.sort((a, b) {
+            if ((a.latitude == null || a.longitude == null) &&
+                (b.latitude == null || b.longitude == null)) {
+              return 0;
+            }
+            if (a.latitude == null || a.longitude == null) {
+              return 1;
+            }
+            if (b.latitude == null || b.longitude == null) {
+              return -1;
+            }
+
+            final distA = Geolocator.distanceBetween(
+              filters.userLatitude!,
+              filters.userLongitude!,
+              a.latitude!,
+              a.longitude!,
+            );
+            final distB = Geolocator.distanceBetween(
+              filters.userLatitude!,
+              filters.userLongitude!,
+              b.latitude!,
+              b.longitude!,
+            );
+            return distA.compareTo(distB);
+          });
+        }
+        break;
+    }
+
+    return filteredList;
+  });
 });

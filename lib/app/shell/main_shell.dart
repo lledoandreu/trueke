@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/core/providers/shell_index_provider.dart';
 import 'package:trueke/features/home/home_page.dart';
 import 'package:trueke/features/auth/providers/auth_provider.dart';
+import 'package:trueke/features/favorites/favorites_page.dart';
 import 'package:trueke/features/profile/presentation/screens/profile_screen.dart';
 import 'package:trueke/features/products/publish_product_page.dart';
+import 'package:trueke/features/chats/presentation/chats_list_page.dart';
 
 class MainShell extends ConsumerWidget {
   final Widget? child;
@@ -25,12 +27,8 @@ class MainShell extends ConsumerWidget {
 
     final List<Widget> screens = [
       const HomePage(),
-      const Scaffold(
-        body: Center(child: Text('Pantalla de Chats (Proximamente)')),
-      ),
-      const Scaffold(
-        body: Center(child: Text('Pantalla de Favoritos (Proximamente)')),
-      ),
+      const ChatsListPage(),
+      const FavoritesPage(),
       ProfileScreen(userId: userId),
     ];
 
