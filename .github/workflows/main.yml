@@ -72,12 +72,12 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Compilar Android App Bundle (.aab) sin firmar
-        run: flutter build appbundle --release --no-pub --no-validate-project
+      - name: Compilar Android App Bundle (.aab) en modo Debug
+        run: flutter build appbundle --debug --no-pub --no-validate-project
 
       - name: Almacenar Artefacto Compilado
         uses: actions/upload-artifact@v4
         with:
-          name: trueke-release-appbundle
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: trueke-debug-appbundle
+          path: build/app/outputs/bundle/debug/app-debug.aab
           retention-days: 7
