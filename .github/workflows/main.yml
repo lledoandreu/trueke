@@ -29,6 +29,9 @@ jobs:
       - name: Instalar Dependencias del Proyecto
         run: flutter pub get
 
+      - name: Generar Mock de variables de entorno para CI
+        run: touch .env
+
       - name: Ejecutar Suite de Tests Automatizados
         run: flutter test
 
