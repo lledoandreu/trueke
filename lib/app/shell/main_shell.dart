@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/core/providers/shell_index_provider.dart';
 import 'package:trueke/features/home/home_page.dart';
-import 'package:trueke/features/auth/providers/auth_provider.dart';
+import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/favorites/favorites_page.dart';
 import 'package:trueke/features/profile/presentation/screens/profile_screen.dart';
 import 'package:trueke/features/products/publish_product_page.dart';

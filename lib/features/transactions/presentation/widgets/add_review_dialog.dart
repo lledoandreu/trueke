@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/reviews_provider.dart';
 
 class AddReviewDialog extends ConsumerStatefulWidget {
@@ -29,12 +30,19 @@ class _AddReviewDialogState extends ConsumerState<AddReviewDialog> {
     setState(() => _isSubmitting = true);
 
     try {
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      final reviewerId = currentUser?.id ?? '';
+      final reviewerName =
+          currentUser?.userMetadata?['full_name'] as String? ?? 'Usuario';
+      final reviewerAvatar =
+          currentUser?.userMetadata?['avatar_url'] as String? ?? '';
+
       await ref
           .read(userReviewsProvider(widget.receiverId).notifier)
           .addReview(
-            reviewerId: 'current_user_id',
-            reviewerName: 'Usuario Autenticado',
-            reviewerAvatar: '',
+            reviewerId: reviewerId,
+            reviewerName: reviewerName,
+            reviewerAvatar: reviewerAvatar,
             rating: _rating,
             comment: _commentController.text.trim(),
           );

@@ -1,4 +1,4 @@
-import 'package:trueke/features/search/models/product_filters.dart';
+import 'package:trueke/features/products/providers/product_filters_provider.dart';
 
 abstract class SearchRepository {
   /// Realiza una búsqueda avanzada mapeando filtros sobre el backend.

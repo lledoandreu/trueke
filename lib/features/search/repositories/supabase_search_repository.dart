@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:trueke/features/search/models/product_filters.dart';
+import 'package:trueke/features/products/providers/product_filters_provider.dart';
 import 'package:trueke/features/search/repositories/search_repository.dart';
 
 class SupabaseSearchRepository implements SearchRepository {
@@ -11,14 +11,13 @@ class SupabaseSearchRepository implements SearchRepository {
   Future<List<Map<String, dynamic>>> searchProducts(
     ProductFilters filters,
   ) async {
-    // Si el usuario aplica ordenamiento por distancia o restringe por geolocalización, invocamos RPC de PostGIS
-    if (filters.userLat != null && filters.userLng != null) {
+    if (filters.userLatitude != null && filters.userLongitude != null) {
       final response = await _supabaseClient.rpc(
         'search_products_by_distance',
         params: {
-          'user_latitude': filters.userLat!,
-          'user_longitude': filters.userLng!,
-          'max_distance_km': filters.maxDistanceKm,
+          'user_latitude': filters.userLatitude!,
+          'user_longitude': filters.userLongitude!,
+          'max_distance_km': filters.radiusInKm,
           'search_query': filters.query.trim().isEmpty
               ? null
               : filters.query.trim(),
@@ -26,13 +25,12 @@ class SupabaseSearchRepository implements SearchRepository {
           'min_price': filters.minPrice,
           'max_price': filters.maxPrice,
           'filter_condition': filters.condition,
-          'sort_by': filters.sortBy,
+          'sort_by': filters.sortBy.name,
         },
       );
       return List<Map<String, dynamic>>.from(response as List);
     }
 
-    // Fallback tradicional si no se especifican coordenadas de referencia
     var query = _supabaseClient
         .from('products')
         .select()
@@ -61,13 +59,13 @@ class SupabaseSearchRepository implements SearchRepository {
     PostgrestTransformBuilder<PostgrestList> finalQuery;
 
     switch (filters.sortBy) {
-      case 'price_asc':
+      case ProductSortOption.priceAsc:
         finalQuery = query.order('price', ascending: true);
         break;
-      case 'price_desc':
+      case ProductSortOption.priceDesc:
         finalQuery = query.order('price', ascending: false);
         break;
-      case 'recent':
+      case ProductSortOption.relevance:
       default:
         finalQuery = query.order('created_at', ascending: false);
         break;

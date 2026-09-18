@@ -182,22 +182,44 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
       return;
     }
 
-    await ref
-        .read(publishProductNotifierProvider.notifier)
-        .submitProduct(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          price: _tradeType == TradeType.trade ? null : price,
-          category: _category,
-          owner: AuthService.currentUserLabel,
-          ownerId: currentUserId,
-          condition: _condition,
-          tradeType: _tradeType,
-          wanted: _wantedController.text.trim(),
-          location: _locationController.text.trim(),
-          latitude: _latitude,
-          longitude: _longitude,
-        );
+    if (widget.product != null) {
+      await ref
+          .read(publishProductNotifierProvider.notifier)
+          .updateExistingProduct(
+            productId: widget.product!.id,
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim(),
+            price: _tradeType == TradeType.trade ? null : price,
+            category: _category,
+            owner: widget.product!.owner,
+            ownerId: currentUserId,
+            condition: _condition,
+            tradeType: _tradeType,
+            wanted: _wantedController.text.trim(),
+            location: _locationController.text.trim(),
+            latitude: _latitude,
+            longitude: _longitude,
+            existingImages: _existingImages,
+            createdAt: widget.product!.createdAt,
+          );
+    } else {
+      await ref
+          .read(publishProductNotifierProvider.notifier)
+          .submitProduct(
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim(),
+            price: _tradeType == TradeType.trade ? null : price,
+            category: _category,
+            owner: AuthService.currentUserLabel,
+            ownerId: currentUserId,
+            condition: _condition,
+            tradeType: _tradeType,
+            wanted: _wantedController.text.trim(),
+            location: _locationController.text.trim(),
+            latitude: _latitude,
+            longitude: _longitude,
+          );
+    }
   }
 
   @override
@@ -210,7 +232,13 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     ) {
       if (next.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Producto publicado con éxito!')),
+          SnackBar(
+            content: Text(
+              widget.product == null
+                  ? '¡Producto publicado con éxito!'
+                  : 'Anuncio modificado con éxito.',
+            ),
+          ),
         );
         Navigator.pop(context);
       }

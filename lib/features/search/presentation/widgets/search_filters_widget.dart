@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trueke/features/search/providers/search_filters_provider.dart';
+import 'package:trueke/features/products/providers/product_filters_provider.dart';
 
 class SearchFiltersWidget extends ConsumerWidget {
   const SearchFiltersWidget({super.key});
 
+  String _mapSortOptionToString(ProductSortOption option) {
+    switch (option) {
+      case ProductSortOption.priceAsc:
+        return 'price_asc';
+      case ProductSortOption.priceDesc:
+        return 'price_desc';
+      case ProductSortOption.distance:
+        return 'distance';
+      case ProductSortOption.relevance:
+        return 'recent';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filters = ref.watch(searchFiltersProvider);
-    final filtersNotifier = ref.read(searchFiltersProvider.notifier);
+    final filters = ref.watch(productFiltersProvider);
+    final filtersNotifier = ref.read(productFiltersProvider.notifier);
 
-    final hasLocation = filters.userLat != null && filters.userLng != null;
+    final hasLocation =
+        filters.userLatitude != null && filters.userLongitude != null;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -37,7 +51,7 @@ class SearchFiltersWidget extends ConsumerWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           DropdownButton<String>(
-            value: filters.sortBy,
+            value: _mapSortOptionToString(filters.sortBy),
             isExpanded: true,
             items: [
               const DropdownMenuItem(
@@ -72,12 +86,13 @@ class SearchFiltersWidget extends ConsumerWidget {
                 value: hasLocation,
                 onChanged: (value) {
                   if (value) {
-                    // Coordenadas simuladas de Madrid Centro para testing de proximidad
                     filtersNotifier.updateLocation(40.416775, -3.703790);
                   } else {
                     filtersNotifier.updateLocation(null, null);
-                    if (filters.sortBy == 'distance') {
-                      filtersNotifier.updateSortBy('recent');
+                    if (filters.sortBy == ProductSortOption.distance) {
+                      filtersNotifier.setSortOption(
+                        ProductSortOption.relevance,
+                      );
                     }
                   }
                 },
@@ -87,15 +102,15 @@ class SearchFiltersWidget extends ConsumerWidget {
           if (hasLocation) ...[
             const SizedBox(height: 16),
             Text(
-              'Distancia Máxima: ${filters.maxDistanceKm.round()} km',
+              'Distancia Máxima: ${filters.radiusInKm.round()} km',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Slider(
-              value: filters.maxDistanceKm,
+              value: filters.radiusInKm,
               min: 1.0,
               max: 100.0,
               divisions: 99,
-              label: '${filters.maxDistanceKm.round()} km',
+              label: '${filters.radiusInKm.round()} km',
               onChanged: (value) {
                 filtersNotifier.updateMaxDistance(value);
               },

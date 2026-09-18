@@ -41,12 +41,9 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
       await ref
           .read(tradeOffersProvider.notifier)
           .sendOffer(
-            productId: widget.product.id,
-            productTitle: widget.product.title,
+            product: widget.product,
             message: _messageController.text.trim(),
-            toUserId: widget.product.ownerId ?? '',
-            offeredProductId: _selectedMyProduct?.id,
-            offeredProductTitle: _selectedMyProduct?.title,
+            offeredProduct: _selectedMyProduct,
           );
 
       if (!mounted) return;
@@ -83,7 +80,7 @@ class _SendTradeOfferPageState extends ConsumerState<SendTradeOfferPage> {
               padding: const EdgeInsets.all(16),
               children: [
                 const Text(
-                  'Estás proponiendo un intercambio por:',
+                  'Estás proposing un intercambio por:',
                   style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
                 const SizedBox(height: 4),

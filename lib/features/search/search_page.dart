@@ -120,7 +120,7 @@ class _RadiusSlider extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentRadius = filters.radiusInKm ?? 50.0;
+    final currentRadius = filters.radiusInKm;
     final double? userLat = filters.userLatitude;
     final double? userLng = filters.userLongitude;
 

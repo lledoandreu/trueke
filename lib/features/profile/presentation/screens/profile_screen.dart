@@ -118,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               );
               if (confirm == true) {
-                await AuthService.signOut();
+                await ref.read(authServiceProvider).signOut();
               }
             },
           ),

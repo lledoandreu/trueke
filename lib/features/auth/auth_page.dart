@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'auth_service.dart';
 
 class AuthPage extends StatefulWidget {
@@ -11,6 +11,20 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
+  @override
+  Widget build(BuildContext context) {
+    return const AuthForm();
+  }
+}
+
+class AuthForm extends ConsumerStatefulWidget {
+  const AuthForm({super.key});
+
+  @override
+  ConsumerState<AuthForm> createState() => _AuthFormState();
+}
+
+class _AuthFormState extends ConsumerState<AuthForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,14 +49,15 @@ class _AuthPageState extends State<AuthPage> {
 
     try {
       var signedInAfterSignUp = false;
+      final authService = ref.read(authServiceProvider);
 
       if (_isLogin) {
-        await AuthService.signIn(
+        await authService.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
       } else {
-        signedInAfterSignUp = await AuthService.signUp(
+        signedInAfterSignUp = await authService.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );

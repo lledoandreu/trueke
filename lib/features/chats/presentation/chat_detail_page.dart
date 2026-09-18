@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trueke/features/auth/auth_service.dart';
-import '../domain/models/chat_model.dart';
+import '../../../features/auth/auth_service.dart';
+import '../domain/models/chat_conversation.dart';
 import '../providers/chat_providers.dart';
 
 class ChatDetailPage extends ConsumerStatefulWidget {
-  final Chat chat;
+  final ChatConversation chat;
 
   const ChatDetailPage({super.key, required this.chat});
 
@@ -38,7 +38,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             senderId: currentUserId,
             text: text,
           );
-      // Desplazamiento automático al final al enviar
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent + 60,
@@ -57,7 +56,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = AuthService.currentUserId;
+    final currentUserIdAsync = ref.watch(authUserIdProvider);
+    final currentUserId = currentUserIdAsync.value;
 
     if (currentUserId == null) {
       return const Scaffold(
@@ -68,9 +68,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     final messagesAsync = ref.watch(chatMessagesStreamProvider(widget.chat.id));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Chat de Trueke: ${widget.chat.productId.toUpperCase()}'),
-      ),
+      appBar: AppBar(title: Text('Chat: ${widget.chat.product}')),
       body: SafeArea(
         child: Column(
           children: [
@@ -85,7 +83,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     );
                   }
 
-                  // Auto-scrolling suave al recibir nuevos mensajes en tiempo real
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (_scrollController.hasClients) {
                       _scrollController.jumpTo(
@@ -100,7 +97,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      final isMe = message.senderId == currentUserId;
+                      final isMe = message.isMine;
 
                       return Align(
                         alignment: isMe
@@ -146,8 +143,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    Center(child: Text('Error al cargar mensajes: $err')),
+                error: (error, stackTrace) =>
+                    Center(child: Text('Error al cargar mensajes: $error')),
               ),
             ),
             Padding(
@@ -158,19 +155,15 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     child: TextField(
                       controller: _messageController,
                       decoration: const InputDecoration(
-                        hintText: 'Escribe un mensaje...',
+                        hintText: 'Escribe tu mensaje...',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
                       ),
                       onSubmitted: (_) => _sendMessage(currentUserId),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.send),
+                    icon: const Icon(Icons.send, color: Colors.blue),
                     onPressed: () => _sendMessage(currentUserId),
                   ),
                 ],

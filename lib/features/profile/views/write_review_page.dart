@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/reviews_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:trueke/features/transactions/providers/reviews_provider.dart';
 
 class WriteReviewPage extends ConsumerStatefulWidget {
   const WriteReviewPage({super.key, required this.receiverId});
@@ -32,13 +33,23 @@ class _WriteReviewPageState extends ConsumerState<WriteReviewPage> {
 
     setState(() => _isSaving = true);
     try {
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      final reviewerId = currentUser?.id ?? '';
+      final reviewerName =
+          currentUser?.userMetadata?['full_name'] as String? ?? 'Usuario';
+      final reviewerAvatar =
+          currentUser?.userMetadata?['avatar_url'] as String? ?? '';
+
       await ref
-          .read(profileRepositoryProvider)
-          .createReview(
-            receiverId: widget.receiverId,
+          .read(userReviewsProvider(widget.receiverId).notifier)
+          .addReview(
+            reviewerId: reviewerId,
+            reviewerName: reviewerName,
+            reviewerAvatar: reviewerAvatar,
             rating: _selectedRating.toDouble(),
             comment: comment,
           );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('¡Valoración enviada con éxito!')),

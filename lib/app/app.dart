@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/app/shell/main_shell.dart';
 import 'package:trueke/features/home/home_page.dart';
-import 'package:trueke/features/auth/providers/auth_provider.dart';
+import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/auth/auth_page.dart';
 
 class MyApp extends ConsumerWidget {

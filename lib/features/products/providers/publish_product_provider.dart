@@ -1,135 +1,161 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../models/product.dart';
-import '../domain/repositories/publish_product_repository.dart';
-import '../repositories/supabase_publish_product_repository.dart';
+import 'products_provider.dart';
 
-// Proveedor para exponer el cliente de Supabase
-final supabaseClientProvider = Provider<SupabaseClient>((ref) {
-  return Supabase.instance.client;
-});
-
-// Proveedor para la interfaz de PublishProductRepository
-final publishProductRepositoryProvider = Provider<PublishProductRepository>((
-  ref,
-) {
-  final client = ref.watch(supabaseClientProvider);
-  return SupabasePublishProductRepository(client);
-});
-
-// Estado de UI para la pantalla de publicación
 class PublishProductState {
-  final File? selectedImage;
   final bool isPublishing;
-  final String? errorMessage;
   final bool isSuccess;
+  final String? errorMessage;
+  final File? selectedImage;
 
   PublishProductState({
-    this.selectedImage,
     this.isPublishing = false,
-    this.errorMessage,
     this.isSuccess = false,
+    this.errorMessage,
+    this.selectedImage,
   });
 
   PublishProductState copyWith({
-    File? selectedImage,
     bool? isPublishing,
-    String? errorMessage,
     bool? isSuccess,
+    String? errorMessage,
+    File? selectedImage,
   }) {
     return PublishProductState(
-      selectedImage: selectedImage ?? this.selectedImage,
       isPublishing: isPublishing ?? this.isPublishing,
-      errorMessage: errorMessage,
       isSuccess: isSuccess ?? this.isSuccess,
+      errorMessage: errorMessage,
+      selectedImage: selectedImage ?? this.selectedImage,
     );
   }
 }
 
-// Notifier reactivo que gestiona la lógica del formulario y captura de imágenes
 class PublishProductNotifier extends Notifier<PublishProductState> {
   @override
-  PublishProductState build() {
-    return PublishProductState();
-  }
+  PublishProductState build() => PublishProductState();
 
-  void setImage(File image) {
-    state = state.copyWith(selectedImage: image, isSuccess: false);
+  void setImage(File file) {
+    state = state.copyWith(selectedImage: file);
   }
 
   void clearImage() {
-    state = state.copyWith(selectedImage: null);
+    state = PublishProductState();
   }
 
   Future<void> submitProduct({
     required String title,
     required String description,
-    double? price,
+    required double? price,
     required String category,
     required String owner,
-    String? ownerId,
+    required String ownerId,
     required String condition,
     required TradeType tradeType,
     required String wanted,
     required String location,
-    double? latitude,
-    double? longitude,
+    required double? latitude,
+    required double? longitude,
   }) async {
-    if (state.selectedImage == null) {
-      state = state.copyWith(
-        errorMessage: 'Por favor, selecciona o toma una foto del producto.',
-      );
-      return;
-    }
-
     state = state.copyWith(isPublishing: true, errorMessage: null);
 
     try {
-      final repository = ref.read(publishProductRepositoryProvider);
+      String imageUrl = '';
 
-      // 1. Subir la imagen al storage usando el ID del propietario (o fallback)
-      final uploadPathId = ownerId ?? owner;
-      final imageUrl = await repository.uploadProductImage(
-        state.selectedImage!,
-        uploadPathId,
-      );
+      if (state.selectedImage != null) {
+        final xFile = XFile(state.selectedImage!.path);
+        imageUrl = await ref
+            .read(productsProvider.notifier)
+            .uploadProductImage(xFile);
+      }
 
-      // 2. Construir el modelo inmutable Product con los tipos exactos detectados
-      final product = Product(
-        id: '${DateTime.now().millisecondsSinceEpoch}',
+      final newProduct = Product(
+        id: '',
         title: title,
         description: description,
         price: price,
-        tradeType: tradeType,
+        images: imageUrl.isNotEmpty ? [imageUrl] : [],
         category: category,
-        location: location,
         owner: owner,
         ownerId: ownerId,
         condition: condition,
+        tradeType: tradeType,
         wanted: wanted,
-        images: [imageUrl],
-        createdAt: DateTime.now(),
+        location: location,
         latitude: latitude,
         longitude: longitude,
+        createdAt: DateTime.now(),
       );
 
-      // 3. Persistir en la base de datos de Supabase
-      await repository.publishProduct(product);
+      await ref.read(productsProvider.notifier).addProduct(newProduct);
+      state = state.copyWith(isPublishing: false, isSuccess: true);
+    } catch (e) {
+      state = state.copyWith(isPublishing: false, errorMessage: e.toString());
+    }
+  }
 
-      state = state.copyWith(
-        isPublishing: false,
-        isSuccess: true,
-        selectedImage: null,
+  Future<void> updateExistingProduct({
+    required String productId,
+    required String title,
+    required String description,
+    required double? price,
+    required String category,
+    required String owner,
+    required String ownerId,
+    required String condition,
+    required TradeType tradeType,
+    required String wanted,
+    required String location,
+    required double? latitude,
+    required double? longitude,
+    required List<String> existingImages,
+    required DateTime createdAt,
+  }) async {
+    state = state.copyWith(isPublishing: true, errorMessage: null);
+
+    try {
+      List<String> finalImages = List.from(existingImages);
+
+      if (state.selectedImage != null) {
+        final xFile = XFile(state.selectedImage!.path);
+        final imageUrl = await ref
+            .read(productsProvider.notifier)
+            .uploadProductImage(xFile);
+        if (imageUrl.isNotEmpty) {
+          finalImages = [imageUrl];
+        }
+      }
+
+      final updatedProduct = Product(
+        id: productId,
+        title: title,
+        description: description,
+        price: price,
+        images: finalImages,
+        category: category,
+        owner: owner,
+        ownerId: ownerId,
+        condition: condition,
+        tradeType: tradeType,
+        wanted: wanted,
+        location: location,
+        latitude: latitude,
+        longitude: longitude,
+        createdAt: createdAt,
       );
+
+      await ref.read(productsProvider.notifier).updateProduct(updatedProduct);
+      state = state.copyWith(isPublishing: false, isSuccess: true);
     } catch (e) {
       state = state.copyWith(isPublishing: false, errorMessage: e.toString());
     }
   }
 }
 
-// Proveedor reactivo del estado de publicación utilizando NotifierProvider
-final publishProductNotifierProvider =
-    NotifierProvider<PublishProductNotifier, PublishProductState>(() {
-      return PublishProductNotifier();
-    });
+final publishProductProvider =
+    NotifierProvider.autoDispose<PublishProductNotifier, PublishProductState>(
+      () => PublishProductNotifier(),
+    );
+
+final publishProductNotifierProvider = publishProductProvider;

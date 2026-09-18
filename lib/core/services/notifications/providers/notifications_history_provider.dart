@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../supabase/supabase_client.dart';
 import '../../../../features/auth/auth_service.dart';
 import '../../../../features/transactions/models/notification_model.dart';
 import '../data/supabase_notifications_repository.dart';
 import '../domain/notifications_repository.dart';
 
-// Provider para el repositorio de notificaciones
 final notificationsRepositoryProvider = Provider<NotificationsRepository>((
   ref,
 ) {
@@ -14,9 +14,10 @@ final notificationsRepositoryProvider = Provider<NotificationsRepository>((
   return SupabaseNotificationsRepository(client);
 });
 
-// Notifier asíncrono para gestionar la bandeja de notificaciones en tiempo real
 class NotificationsHistoryNotifier
     extends AsyncNotifier<List<NotificationModel>> {
+  RealtimeChannel? _channel;
+
   @override
   Future<List<NotificationModel>> build() async {
     final userIdAsync = ref.watch(authUserIdProvider);
@@ -27,14 +28,72 @@ class NotificationsHistoryNotifier
     }
 
     final repository = ref.watch(notificationsRepositoryProvider);
+    final client = ref.watch(supabaseClientProvider);
+
+    _initRealtimeSubscription(client, userId);
+
     return repository.fetchNotifications(userId: userId);
   }
 
-  /// Marca una notificación concreta como leída y actualiza el estado localmente de forma reactiva
+  void _initRealtimeSubscription(SupabaseClient client, String userId) {
+    _channel?.unsubscribe();
+
+    _channel = client
+        .channel('public:notifications:user_id=eq.$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) {
+            final eventType = payload.eventType;
+            final currentList = List<NotificationModel>.from(state.value ?? []);
+
+            if (eventType == PostgresChangeEvent.insert) {
+              final newNotification = NotificationModel.fromJson(
+                payload.newRecord,
+              );
+              if (!currentList.any((n) => n.id == newNotification.id)) {
+                state = AsyncData([newNotification, ...currentList]);
+              }
+            } else if (eventType == PostgresChangeEvent.update) {
+              final updatedNotification = NotificationModel.fromJson(
+                payload.newRecord,
+              );
+              state = AsyncData(
+                currentList
+                    .map(
+                      (n) => n.id == updatedNotification.id
+                          ? updatedNotification
+                          : n,
+                    )
+                    .toList(),
+              );
+            } else if (eventType == PostgresChangeEvent.delete) {
+              final oldId = payload.oldRecord['id'] as String?;
+              if (oldId != null) {
+                state = AsyncData(
+                  currentList.where((n) => n.id != oldId).toList(),
+                );
+              }
+            }
+          },
+        );
+
+    _channel?.subscribe();
+
+    ref.onDispose(() {
+      _channel?.unsubscribe();
+    });
+  }
+
   Future<void> markAsRead(String notificationId) async {
     final currentList = state.value ?? [];
 
-    // Actualización optimista del estado local
     state = AsyncData(
       currentList
           .map(
@@ -57,13 +116,11 @@ class NotificationsHistoryNotifier
       final repository = ref.read(notificationsRepositoryProvider);
       await repository.markAsRead(notificationId: notificationId);
     } catch (error, stackTrace) {
-      // Si falla en el servidor, revertimos volviendo a recargar de la fuente
       state = AsyncError(error, stackTrace);
       ref.invalidateSelf();
     }
   }
 
-  /// Marca todas las notificaciones del usuario actual como leídas
   Future<void> markAllAsRead() async {
     final userId = ref.read(authUserIdProvider).value;
     if (userId == null) return;
@@ -95,7 +152,6 @@ class NotificationsHistoryNotifier
   }
 }
 
-// Provider global de la lista de notificaciones de la bandeja
 final notificationsHistoryProvider =
     AsyncNotifierProvider<
       NotificationsHistoryNotifier,

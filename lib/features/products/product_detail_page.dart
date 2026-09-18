@@ -49,14 +49,12 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
     try {
       final chatRepo = ref.read(chatRepositoryProvider);
 
-      // Obtiene o crea el chat usando el repositorio definitivo del módulo moderno
       final chatEntity = await chatRepo.getOrCreateChat(
         productId: widget.product.id,
         sellerId: widget.product.ownerId ?? '',
         buyerId: currentUserId,
       );
 
-      // Envía el mensaje inicial automatizado si la sala es nueva o por cortesía
       await chatRepo.sendMessage(
         chatId: chatEntity.id,
         senderId: currentUserId,
@@ -142,23 +140,32 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
             );
             return;
           }
+
           await ref
               .read(favoriteNotifierProvider.notifier)
-              .toggle(userId, widget.product.id, !isFav);
+              .toggle(userId, widget.product.id, isFav);
         },
-        child: Icon(
-          isFav ? Icons.favorite : Icons.favorite_border,
-          color: isFav ? Colors.red : Colors.grey,
+        child: favoriteIdsAsync.when(
+          data: (_) => Icon(
+            isFav ? Icons.favorite : Icons.favorite_border,
+            color: isFav ? AppColors.primary : Colors.grey,
+          ),
+          loading: () => const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          error: (_, _) => const Icon(Icons.error_outline, color: Colors.red),
         ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(13),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -167,15 +174,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
           child: Row(
             children: [
               Expanded(
-                flex: 2,
                 child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   onPressed: _isStartingChat ? null : _handleStartChat,
                   icon: _isStartingChat
                       ? const SizedBox(
@@ -184,22 +183,15 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Chat'),
+                  label: const Text('Chatear'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                flex: 3,
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   onPressed: _handleTradeOffer,
-                  icon: const Icon(Icons.swap_horiz),
-                  label: const Text('Ofertar Trueque'),
+                  icon: const Icon(Icons.swap_horizontal_circle_outlined),
+                  label: const Text('Ofertar'),
                 ),
               ),
             ],

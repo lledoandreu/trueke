@@ -1,18 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../domain/models/chat_model.dart';
-import '../domain/models/message_model.dart';
+import '../domain/models/chat_conversation.dart';
+import '../domain/models/chat_message.dart';
 import '../domain/repositories/chat_repository.dart';
 
 class SupabaseChatRepository implements ChatRepository {
   final SupabaseClient _client;
-
-  SupabaseChatRepository(this._client);
-
   static const _chatsTable = 'chats';
   static const _messagesTable = 'messages';
 
+  SupabaseChatRepository(this._client);
+
   @override
-  Future<Chat> getOrCreateChat({
+  Future<ChatConversation> getOrCreateChat({
     required String productId,
     required String sellerId,
     required String buyerId,
@@ -24,46 +23,62 @@ class SupabaseChatRepository implements ChatRepository {
         .contains('participant_ids', [buyerId])
         .maybeSingle();
 
+    final currentUserId = _client.auth.currentUser?.id ?? '';
+
     if (response != null) {
-      return Chat.fromJson(response);
+      return ChatConversation.fromJson(response, currentUserId: currentUserId);
     }
 
-    final newChatId =
-        '${DateTime.now().millisecondsSinceEpoch}_${productId.substring(0, 4)}';
     final newChatData = {
-      'id': newChatId,
       'product_id': productId,
       'participant_ids': [buyerId, sellerId],
+      'buyer_id': buyerId,
+      'seller_id': sellerId,
       'updated_at': DateTime.now().toIso8601String(),
     };
 
-    await _client.from(_chatsTable).insert(newChatData);
-    return Chat.fromJson(newChatData);
+    final inserted = await _client
+        .from(_chatsTable)
+        .insert(newChatData)
+        .select()
+        .single();
+    return ChatConversation.fromJson(inserted, currentUserId: currentUserId);
   }
 
   @override
-  Stream<List<Chat>> streamUserChats(String userId) {
+  Stream<List<ChatConversation>> streamUserChats(String userId) {
     return _client
         .from(_chatsTable)
         .stream(primaryKey: ['id'])
         .order('updated_at', ascending: false)
         .map((maps) {
           return maps
-              .map((map) => Chat.fromJson(map))
-              .where((chat) => chat.participantIds.contains(userId))
+              .where((map) {
+                final participants = map['participant_ids'] as List<dynamic>?;
+                return participants?.contains(userId) ?? false;
+              })
+              .map(
+                (map) => ChatConversation.fromJson(map, currentUserId: userId),
+              )
               .toList();
         });
   }
 
   @override
-  Stream<List<Message>> streamMessages(String chatId) {
+  Stream<List<ChatMessage>> streamMessages(String chatId) {
+    final currentUserId = _client.auth.currentUser?.id ?? '';
     return _client
         .from(_messagesTable)
         .stream(primaryKey: ['id'])
         .eq('chat_id', chatId)
         .order('created_at', ascending: true)
         .map((maps) {
-          return maps.map((map) => Message.fromJson(map)).toList();
+          return maps
+              .map(
+                (map) =>
+                    ChatMessage.fromJson(map, currentUserId: currentUserId),
+              )
+              .toList();
         });
   }
 
@@ -74,10 +89,8 @@ class SupabaseChatRepository implements ChatRepository {
     required String text,
   }) async {
     final now = DateTime.now().toIso8601String();
-    final messageId = '${DateTime.now().millisecondsSinceEpoch}_$senderId';
 
     await _client.from(_messagesTable).insert({
-      'id': messageId,
       'chat_id': chatId,
       'sender_id': senderId,
       'text': text.trim(),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trueke/features/auth/auth_service.dart';
+import '../../../features/auth/auth_service.dart';
 import '../providers/chat_providers.dart';
 import 'chat_detail_page.dart';
 
@@ -9,7 +9,8 @@ class ChatsListPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = AuthService.currentUserId;
+    final currentUserIdAsync = ref.watch(authUserIdProvider);
+    final currentUserId = currentUserIdAsync.value;
 
     if (currentUserId == null) {
       return const Scaffold(
@@ -40,7 +41,7 @@ class ChatsListPage extends ConsumerWidget {
             itemBuilder: (context, index) {
               final chat = chats[index];
               final displayMessage =
-                  chat.lastMessage?.text ?? 'Conversación vacía';
+                  chat.lastMessageText ?? 'Conversación vacía';
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -51,7 +52,7 @@ class ChatsListPage extends ConsumerWidget {
                     child: const Icon(Icons.chat_bubble_outline),
                   ),
                   title: Text(
-                    'Trueke por producto: ${chat.productId.toUpperCase()}',
+                    'Trueke por producto: ${chat.product}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(

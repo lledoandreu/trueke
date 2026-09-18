@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/reviews_provider.dart';
+import 'package:trueke/features/transactions/providers/reviews_provider.dart';
 
 class ReviewsPage extends ConsumerWidget {
   const ReviewsPage({super.key, required this.userId});
