@@ -1,0 +1,67 @@
+name: Flutter CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      # Configuracion nativa de Java para el entorno movil
+      - name: Set up Java Development Kit
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Configurar variables del SDK de Android en el entorno virtual
+      - name: Set up Android SDK paths
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      # Inicializacion del SDK de Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Sincronizacion limpia de librerias y paquetes
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Parche inyectado para forzar la creacion de archivos de entorno
+      - name: Create Dummy Environment File
+        run: |
+          echo "DUMMY_KEY=true" > .env
+          echo "DUMMY_KEY=true" > .env.production
+
+      # Analisis estatico de calidad del codigo fuente
+      - name: Run flutter analyze
+        run: flutter analyze lib/
+
+      # Compilacion optimizada para la plataforma Web
+      - name: Build Web Production Release
+        run: flutter build web --release
+
+      # Compilacion del instalador APK omitiendo la firma del Keystore privado
+      - name: Build Android APK
+        run: flutter build apk --debug
+
+      # Almacenamiento seguro de los activos compilados en la nube
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trueke-production-release
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/web/
