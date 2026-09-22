@@ -51,13 +51,13 @@ jobs:
       - name: Build Web Production Release
         run: flutter build web --release
 
-      - name: Build Android APK
-        run: flutter build apk --debug
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: trueke-production-release
           path: |
-            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/bundle/release/app-release.aab
             build/web/
