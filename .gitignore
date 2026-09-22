@@ -52,3 +52,6 @@ supabase/.temp/
 
 # Environment variables with secrets
 .env
+scripts/inject_env.sh
+.env
+.env.production
