@@ -45,6 +45,17 @@ jobs:
           echo "SUPABASE_URL=${URL_SECRET}" > .env.production
           echo "SUPABASE_ANON_KEY=${KEY_SECRET}" >> .env.production
 
+      - name: Decode Android Keystore File
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create Sign Properties File
+        run: |
+          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
       - name: Run flutter analyze
         run: flutter analyze lib/
 
