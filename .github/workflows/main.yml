@@ -47,7 +47,8 @@ jobs:
 
       - name: Decode Android Keystore File
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode --ignore-garbage > android/app/upload-keystore.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | tr -d '
+ ' | base64 --decode > android/app/upload-keystore.jks
 
       - name: Create Sign Properties File
         run: |
