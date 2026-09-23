@@ -35,17 +35,12 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 
   Future<void> addProduct(Product product) async {
-    state = const AsyncValue.loading();
     try {
-      final repo = ref.read(productRepositoryProvider);
-      await repo.createProduct(product);
-      final filters = ref.read(productFiltersProvider);
-      final updated = await repo.getProducts(
-        userLatitude: filters.userLatitude,
-        userLongitude: filters.userLongitude,
-        radiusInKm: filters.radiusInKm,
-      );
-      state = AsyncValue.data(updated);
+      await ref.read(productRepositoryProvider).createProduct(product);
+
+      // Mutación local en memoria limpia utilizando el valor actual verificado
+      final currentList = state.value ?? [];
+      state = AsyncValue.data([...currentList, product]);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -53,17 +48,14 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 
   Future<void> updateProduct(Product product) async {
-    state = const AsyncValue.loading();
     try {
-      final repo = ref.read(productRepositoryProvider);
-      await repo.updateProduct(product);
-      final filters = ref.read(productFiltersProvider);
-      final updated = await repo.getProducts(
-        userLatitude: filters.userLatitude,
-        userLongitude: filters.userLongitude,
-        radiusInKm: filters.radiusInKm,
+      await ref.read(productRepositoryProvider).updateProduct(product);
+
+      // Mutación local: reemplaza el producto modificado por su ID en el estado
+      final currentList = state.value ?? [];
+      state = AsyncValue.data(
+        currentList.map((p) => p.id == product.id ? product : p).toList(),
       );
-      state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -81,7 +73,6 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   }
 
   Future<void> deleteProduct(Product product) async {
-    state = const AsyncValue.loading();
     try {
       final repo = ref.read(productRepositoryProvider);
 
@@ -92,13 +83,12 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
       }
 
       await repo.deleteProduct(product.id);
-      final filters = ref.read(productFiltersProvider);
-      final updated = await repo.getProducts(
-        userLatitude: filters.userLatitude,
-        userLongitude: filters.userLongitude,
-        radiusInKm: filters.radiusInKm,
+
+      // Mutación local: remueve el elemento eliminado de la lista en memoria
+      final currentList = state.value ?? [];
+      state = AsyncValue.data(
+        currentList.where((p) => p.id != product.id).toList(),
       );
-      state = AsyncValue.data(updated);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
