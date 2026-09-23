@@ -36,16 +36,14 @@ android {
     signingConfigs {
         create("release") {
             if (hasPropertiesFile) {
-                // Modo Local: Lee del archivo físico key.properties
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = keystoreProperties.getProperty("storeFile")?.let { rootProject.file("app/$it") }
+                storeFile = file("upload-keystore.jks")
                 storePassword = keystoreProperties.getProperty("storePassword")
             } else {
-                // Modo Remoto CI/CD: Lee de las variables de entorno inyectadas de forma segura por GitHub Actions
                 keyAlias = System.getenv("KEY_ALIAS") ?: ""
                 keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-                storeFile = rootProject.file("app/upload-keystore.jks")
+                storeFile = file("upload-keystore.jks")
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             }
         }
