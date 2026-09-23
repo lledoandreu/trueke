@@ -36,10 +36,8 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'trade_offers',
-          callback: (payload) async {
-            final repository = ref.read(tradeOfferRepositoryProvider);
-            final updatedOffers = await repository.getOffers(userId);
-            state = AsyncData(updatedOffers);
+          callback: (payload) {
+            ref.invalidateSelf();
           },
         );
 
