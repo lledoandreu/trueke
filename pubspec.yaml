@@ -2,7 +2,7 @@ name: trueke
 description: Plataforma de compraventa e intercambio.
 publish_to: "none"
 
-version: 1.0.10+10
+version: 1.0.11+11
 
 
 environment:
