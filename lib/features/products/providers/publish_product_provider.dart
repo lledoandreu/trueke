@@ -8,26 +8,26 @@ class PublishProductState {
   final bool isPublishing;
   final bool isSuccess;
   final String? errorMessage;
-  final File? selectedImage;
+  final List<File> selectedImages;
 
   PublishProductState({
     this.isPublishing = false,
     this.isSuccess = false,
     this.errorMessage,
-    this.selectedImage,
+    this.selectedImages = const [],
   });
 
   PublishProductState copyWith({
     bool? isPublishing,
     bool? isSuccess,
     String? errorMessage,
-    File? selectedImage,
+    List<File>? selectedImages,
   }) {
     return PublishProductState(
       isPublishing: isPublishing ?? this.isPublishing,
       isSuccess: isSuccess ?? this.isSuccess,
       errorMessage: errorMessage,
-      selectedImage: selectedImage ?? this.selectedImage,
+      selectedImages: selectedImages ?? this.selectedImages,
     );
   }
 }
@@ -36,11 +36,11 @@ class PublishProductNotifier extends Notifier<PublishProductState> {
   @override
   PublishProductState build() => PublishProductState();
 
-  void setImage(File file) {
-    state = state.copyWith(selectedImage: file);
+  void setImages(List<File> files) {
+    state = state.copyWith(selectedImages: files);
   }
 
-  void clearImage() {
+  void clearImages() {
     state = PublishProductState();
   }
 
@@ -61,13 +61,16 @@ class PublishProductNotifier extends Notifier<PublishProductState> {
     state = state.copyWith(isPublishing: true, errorMessage: null);
 
     try {
-      String imageUrl = '';
+      final List<String> uploadedUrls = [];
 
-      if (state.selectedImage != null) {
-        final xFile = XFile(state.selectedImage!.path);
-        imageUrl = await ref
+      for (final file in state.selectedImages) {
+        final xFile = XFile(file.path);
+        final imageUrl = await ref
             .read(productsProvider.notifier)
             .uploadProductImage(xFile);
+        if (imageUrl.isNotEmpty) {
+          uploadedUrls.add(imageUrl);
+        }
       }
 
       final newProduct = Product(
@@ -75,7 +78,7 @@ class PublishProductNotifier extends Notifier<PublishProductState> {
         title: title,
         description: description,
         price: price,
-        images: imageUrl.isNotEmpty ? [imageUrl] : [],
+        images: uploadedUrls,
         category: category,
         owner: owner,
         ownerId: ownerId,
@@ -115,15 +118,15 @@ class PublishProductNotifier extends Notifier<PublishProductState> {
     state = state.copyWith(isPublishing: true, errorMessage: null);
 
     try {
-      List<String> finalImages = List.from(existingImages);
+      final List<String> finalImages = List.from(existingImages);
 
-      if (state.selectedImage != null) {
-        final xFile = XFile(state.selectedImage!.path);
+      for (final file in state.selectedImages) {
+        final xFile = XFile(file.path);
         final imageUrl = await ref
             .read(productsProvider.notifier)
             .uploadProductImage(xFile);
         if (imageUrl.isNotEmpty) {
-          finalImages = [imageUrl];
+          finalImages.add(imageUrl);
         }
       }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/profile/models/user_profile.dart';
 import 'package:trueke/features/profile/providers/profile_provider.dart';
+import 'package:trueke/features/transactions/presentation/pages/user_reviews_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -38,6 +39,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _displayNameController.text = profile.displayName;
       _bioController.text = profile.bio ?? '';
     }
+  }
+
+  Widget _buildStarRating(double rating) {
+    List<Widget> stars = [];
+    int fullStars = rating.floor();
+    bool hasHalfStar =
+        (rating - fullStars) >= 0.25 && (rating - fullStars) < 0.75;
+    if ((rating - fullStars) >= 0.75) fullStars++;
+
+    for (int i = 1; i <= 5; i++) {
+      if (i <= fullStars) {
+        stars.add(const Icon(Icons.star, color: Colors.amber, size: 20));
+      } else if (i == fullStars + 1 && hasHalfStar) {
+        stars.add(const Icon(Icons.star_half, color: Colors.amber, size: 20));
+      } else {
+        stars.add(const Icon(Icons.star_border, color: Colors.amber, size: 20));
+      }
+    }
+    return Row(mainAxisSize: MainAxisSize.min, children: stars);
   }
 
   Future<void> _saveProfile(UserProfile currentProfile) async {
@@ -152,17 +172,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       context,
                     ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${profile.averageRating.toStringAsFixed(1)} (${profile.totalRatings} valoraciones)',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UserReviewsScreen(
+                            userId: profile.id,
+                            userName: profile.displayName,
+                          ),
+                        ),
+                      ).then(
+                        (_) =>
+                            ref.invalidate(userProfileProvider(widget.userId)),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 6.0,
                       ),
-                    ],
+                      key: const ValueKey('profile_rating_inkwell'),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildStarRating(profile.averageRating),
+                              const SizedBox(width: 8),
+                              Text(
+                                profile.averageRating.toStringAsFixed(1),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '(${profile.totalRatings} valoraciones)',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.blueAccent,
+                                  decoration: TextDecoration.underline,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   TextFormField(

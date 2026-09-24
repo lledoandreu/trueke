@@ -125,7 +125,9 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
             _selectedImages.add(image);
             ref
                 .read(publishProductNotifierProvider.notifier)
-                .setImage(File(image.path));
+                .setImages(
+                  _selectedImages.map((img) => File(img.path)).toList(),
+                );
           }
         }
       });
@@ -136,11 +138,11 @@ class _PublishProductPageState extends ConsumerState<PublishProductPage> {
     setState(() {
       _selectedImages.remove(image);
       if (_selectedImages.isEmpty) {
-        ref.read(publishProductNotifierProvider.notifier).clearImage();
+        ref.read(publishProductNotifierProvider.notifier).clearImages();
       } else {
         ref
             .read(publishProductNotifierProvider.notifier)
-            .setImage(File(_selectedImages.first.path));
+            .setImages(_selectedImages.map((img) => File(img.path)).toList());
       }
     });
   }

@@ -90,9 +90,7 @@ class SearchFiltersWidget extends ConsumerWidget {
                   } else {
                     filtersNotifier.updateLocation(null, null);
                     if (filters.sortBy == ProductSortOption.distance) {
-                      filtersNotifier.setSortOption(
-                        ProductSortOption.relevance,
-                      );
+                      filtersNotifier.updateSortBy("recent");
                     }
                   }
                 },
