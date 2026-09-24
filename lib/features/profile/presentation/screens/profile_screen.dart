@@ -4,6 +4,7 @@ import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/profile/models/user_profile.dart';
 import 'package:trueke/features/profile/providers/profile_provider.dart';
 import 'package:trueke/features/transactions/presentation/pages/user_reviews_screen.dart';
+import 'package:trueke/features/transactions/presentation/pages/user_transactions_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -248,6 +249,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     maxLines: 3,
                     enabled: _isEditing && !mutationState.isLoading,
                   ),
+                  const SizedBox(height: 24),
+                  if (!_isEditing) ...[
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.swap_horizontal_circle,
+                          color: Colors.blueAccent,
+                        ),
+                        title: const Text(
+                          'Mis Intercambios',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'Gestionar ofertas enviadas y recibidas',
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const UserTransactionsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   if (_isEditing)
                     SizedBox(
