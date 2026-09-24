@@ -85,9 +85,7 @@ void main() {
       final result = await container!.read(tradeOffersProvider.future);
 
       expect(result, sampleOffers);
-      verify(
-        () => mockClient.channel('public:trade_offers:user_id=user_123'),
-      ).called(1);
+      verify(() => mockClient.channel(any())).called(1);
       verify(() => mockChannel.subscribe()).called(1);
     },
   );

@@ -31,7 +31,7 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
     _channel?.unsubscribe();
 
     _channel = client
-        .channel('public:trade_offers:user_id=$userId')
+        .channel('public:trade_offers:user_id=')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
@@ -61,6 +61,9 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
             message: message,
             offeredProduct: offeredProduct,
           );
+
+      // Forzar la invalidación inmediata para refrescar el estado del catálogo local
+      ref.invalidateSelf();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -75,6 +78,9 @@ class TradeOffersNotifier extends AsyncNotifier<List<TradeOffer>> {
       await ref
           .read(tradeOfferRepositoryProvider)
           .updateStatus(offer: offer, status: status);
+
+      // Invalidar el estado inmediatamente para sincronizar la UI tras la respuesta
+      ref.invalidateSelf();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
