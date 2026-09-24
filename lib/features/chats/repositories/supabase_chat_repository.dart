@@ -5,7 +5,7 @@ import '../domain/repositories/chat_repository.dart';
 
 class SupabaseChatRepository implements ChatRepository {
   final SupabaseClient _client;
-  static const _chatsTable = 'chats';
+  static const _conversationsTable = 'conversations';
   static const _messagesTable = 'messages';
 
   SupabaseChatRepository(this._client);
@@ -17,10 +17,10 @@ class SupabaseChatRepository implements ChatRepository {
     required String buyerId,
   }) async {
     final response = await _client
-        .from(_chatsTable)
+        .from(_conversationsTable)
         .select()
         .eq('product_id', productId)
-        .contains('participant_ids', [buyerId])
+        .eq('buyer_id', buyerId)
         .maybeSingle();
 
     final currentUserId = _client.auth.currentUser?.id ?? '';
@@ -29,16 +29,18 @@ class SupabaseChatRepository implements ChatRepository {
       return ChatConversation.fromJson(response, currentUserId: currentUserId);
     }
 
+    // Nota: El modelo requiere buyer_name y seller_name, se inyectan valores base o el trigger los actualiza
     final newChatData = {
       'product_id': productId,
-      'participant_ids': [buyerId, sellerId],
       'buyer_id': buyerId,
       'seller_id': sellerId,
-      'updated_at': DateTime.now().toIso8601String(),
+      'buyer_name': 'Usuario',
+      'seller_name': 'Usuario',
+      'created_at': DateTime.now().toIso8601String(),
     };
 
     final inserted = await _client
-        .from(_chatsTable)
+        .from(_conversationsTable)
         .insert(newChatData)
         .select()
         .single();
@@ -48,14 +50,15 @@ class SupabaseChatRepository implements ChatRepository {
   @override
   Stream<List<ChatConversation>> streamUserChats(String userId) {
     return _client
-        .from(_chatsTable)
+        .from(_conversationsTable)
         .stream(primaryKey: ['id'])
-        .order('updated_at', ascending: false)
+        .order('created_at', ascending: false)
         .map((maps) {
           return maps
               .where((map) {
-                final participants = map['participant_ids'] as List<dynamic>?;
-                return participants?.contains(userId) ?? false;
+                final buyerId = map['buyer_id'] as String?;
+                final sellerId = map['seller_id'] as String?;
+                return buyerId == userId || sellerId == userId;
               })
               .map(
                 (map) => ChatConversation.fromJson(map, currentUserId: userId),
@@ -70,15 +73,18 @@ class SupabaseChatRepository implements ChatRepository {
     return _client
         .from(_messagesTable)
         .stream(primaryKey: ['id'])
-        .eq('chat_id', chatId)
+        .eq('conversation_id', chatId)
         .order('created_at', ascending: true)
         .map((maps) {
-          return maps
-              .map(
-                (map) =>
-                    ChatMessage.fromJson(map, currentUserId: currentUserId),
-              )
-              .toList();
+          return maps.map((map) {
+            // Mapeamos dinámicamente conversation_id a chat_id para compatibilidad con el modelo actual
+            final modifiedMap = Map<String, dynamic>.from(map);
+            modifiedMap['chat_id'] = map['conversation_id'];
+            return ChatMessage.fromJson(
+              modifiedMap,
+              currentUserId: currentUserId,
+            );
+          }).toList();
         });
   }
 
@@ -91,15 +97,10 @@ class SupabaseChatRepository implements ChatRepository {
     final now = DateTime.now().toIso8601String();
 
     await _client.from(_messagesTable).insert({
-      'chat_id': chatId,
+      'conversation_id': chatId,
       'sender_id': senderId,
       'text': text.trim(),
       'created_at': now,
     });
-
-    await _client
-        .from(_chatsTable)
-        .update({'updated_at': now})
-        .eq('id', chatId);
   }
 }

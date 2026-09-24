@@ -25,22 +25,41 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   @override
   Future<List<Product>> build() async {
     final filters = ref.watch(productFiltersProvider);
-    return ref
+
+    final rawProducts = await ref
         .watch(productRepositoryProvider)
         .getProducts(
           userLatitude: filters.userLatitude,
           userLongitude: filters.userLongitude,
           radiusInKm: filters.radiusInKm,
         );
+
+    final normalizedQuery = filters.query.toLowerCase();
+    final targetCategory = filters.category;
+
+    return rawProducts.where((product) {
+      final matchesQuery =
+          normalizedQuery.isEmpty ||
+          [
+            product.title,
+            product.description,
+            product.category,
+            product.location,
+            product.owner,
+          ].any((value) => value.toLowerCase().contains(normalizedQuery));
+
+      final matchesCategory =
+          targetCategory == null ||
+          (product.category.toLowerCase() == targetCategory.toLowerCase());
+
+      return matchesQuery && matchesCategory;
+    }).toList();
   }
 
   Future<void> addProduct(Product product) async {
     try {
       await ref.read(productRepositoryProvider).createProduct(product);
-
-      // Mutación local en memoria limpia utilizando el valor actual verificado
-      final currentList = state.value ?? [];
-      state = AsyncValue.data([...currentList, product]);
+      ref.invalidateSelf();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -50,12 +69,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
   Future<void> updateProduct(Product product) async {
     try {
       await ref.read(productRepositoryProvider).updateProduct(product);
-
-      // Mutación local: reemplaza el producto modificado por su ID en el estado
-      final currentList = state.value ?? [];
-      state = AsyncValue.data(
-        currentList.map((p) => p.id == product.id ? product : p).toList(),
-      );
+      ref.invalidateSelf();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -68,7 +82,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
           .read(productRepositoryProvider)
           .uploadProductImage(image);
     } catch (e) {
-      throw Exception('Error al subir imagen: $e');
+      throw Exception('Error al subir imagen: ');
     }
   }
 
@@ -83,12 +97,7 @@ class ProductsNotifier extends AsyncNotifier<List<Product>> {
       }
 
       await repo.deleteProduct(product.id);
-
-      // Mutación local: remueve el elemento eliminado de la lista en memoria
-      final currentList = state.value ?? [];
-      state = AsyncValue.data(
-        currentList.where((p) => p.id != product.id).toList(),
-      );
+      ref.invalidateSelf();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;

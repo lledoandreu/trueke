@@ -63,16 +63,27 @@ class UserProfile {
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    // Evitar errores de casteo nulo asignando fallbacks seguros y robustos
+    final rawCreatedAt = json['created_at'] as String?;
+    final rawUpdatedAt = json['updated_at'] as String?;
+
     return UserProfile(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      displayName: json['display_name'] as String,
+      id: json['id'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      displayName:
+          json['display_name'] as String? ??
+          json['email'] as String? ??
+          'Usuario Trueke',
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
       averageRating: (json['average_rating'] as num?)?.toDouble() ?? 0.0,
       totalRatings: json['total_ratings'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: rawCreatedAt != null
+          ? DateTime.parse(rawCreatedAt)
+          : DateTime.now(),
+      updatedAt: rawUpdatedAt != null
+          ? DateTime.parse(rawUpdatedAt)
+          : DateTime.now(),
     );
   }
 
