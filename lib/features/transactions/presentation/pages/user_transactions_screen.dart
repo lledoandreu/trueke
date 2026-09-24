@@ -1,32 +1,32 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../models/transaction.dart';
-import '../../providers/transaction_providers.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../../../../models/transaction.dart";
+import "../../providers/transaction_providers.dart";
 
 class UserTransactionsScreen extends ConsumerWidget {
   const UserTransactionsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final client = ref.watch(supabaseClientProvider);
     final transactionsAsync = ref.watch(userTransactionsProvider);
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final currentUserId = client.auth.currentUser?.id ?? "";
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Mis Intercambios'),
+          title: const Text("Mis Intercambios"),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Enviados (Mis Ofertas)'),
-              Tab(text: 'Recibidos (Propuestas)'),
+              Tab(text: "Enviados (Mis Ofertas)"),
+              Tab(text: "Recibidos (Propuestas)"),
             ],
           ),
         ),
         body: transactionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(child: Text('Error: $error')),
+          error: (error, _) => const Center(child: Text("Error")),
           data: (transactions) {
             final sentOffers = transactions
                 .where((t) => t.buyerId == currentUserId)
@@ -70,20 +70,20 @@ class _OffersList extends ConsumerWidget {
   String _getStatusLabel(TransactionStatus status) {
     switch (status) {
       case TransactionStatus.pending:
-        return 'Pendiente';
+        return "Pendiente";
       case TransactionStatus.accepted:
-        return 'Aceptado';
+        return "Aceptado";
       case TransactionStatus.completed:
-        return 'Completado';
+        return "Completado";
       case TransactionStatus.cancelled:
-        return 'Cancelado';
+        return "Cancelado";
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (offers.isEmpty) {
-      return const Center(child: Text('No hay ofertas en esta categoría.'));
+      return const Center(child: Text("No hay ofertas en esta categoría."));
     }
 
     return ListView.builder(
@@ -91,6 +91,8 @@ class _OffersList extends ConsumerWidget {
       itemCount: offers.length,
       itemBuilder: (context, index) {
         final offer = offers[index];
+        final precio = offer.price;
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: Padding(
@@ -126,16 +128,16 @@ class _OffersList extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   isReceived
-                      ? 'De: ${offer.buyerName}'
-                      : 'Vendedor: ${offer.sellerName}',
+                      ? "De: \${offer.buyerName}"
+                      : "Vendedor: \${offer.sellerName}",
                 ),
-                if (offer.price != null) ...[
-                  const SizedBox(height: 4),
+                if (precio != null) const SizedBox(height: 4),
+                if (precio != null)
+                  // ignore: prefer_const_constructors
                   Text(
-                    'Compensación económica: ${offer.price!.toStringAsFixed(2)} €',
+                    "Compensación económica: \${precio.toStringAsFixed(2)} €",
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                ],
                 if (isReceived &&
                     offer.status == TransactionStatus.pending) ...[
                   const SizedBox(height: 12),
@@ -143,30 +145,46 @@ class _OffersList extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton(
-                        onPressed: () {
-                          ref
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await ref
                               .read(userTransactionsProvider.notifier)
-                              .changeStatus(
-                                offer.id,
-                                TransactionStatus.cancelled.name,
+                              .procesarCambioEstadoTrueque(
+                                transactionId: offer.id,
+                                productId: offer.productId,
+                                nuevoEstado: TransactionStatus.cancelled,
                               );
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text("Oferta rechazada con éxito."),
+                            ),
+                          );
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
-                        child: const Text('Rechazar'),
+                        child: const Text("Rechazar"),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
-                        onPressed: () {
-                          ref
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await ref
                               .read(userTransactionsProvider.notifier)
-                              .changeStatus(
-                                offer.id,
-                                TransactionStatus.accepted.name,
+                              .procesarCambioEstadoTrueque(
+                                transactionId: offer.id,
+                                productId: offer.productId,
+                                nuevoEstado: TransactionStatus.accepted,
                               );
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Oferta aceptada. ¡Producto reservado!",
+                              ),
+                            ),
+                          );
                         },
-                        child: const Text('Aceptar'),
+                        child: const Text("Aceptar"),
                       ),
                     ],
                   ),
@@ -177,16 +195,25 @@ class _OffersList extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () {
-                          ref
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await ref
                               .read(userTransactionsProvider.notifier)
-                              .changeStatus(
-                                offer.id,
-                                TransactionStatus.completed.name,
+                              .procesarCambioEstadoTrueque(
+                                transactionId: offer.id,
+                                productId: offer.productId,
+                                nuevoEstado: TransactionStatus.completed,
                               );
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "¡Trato finalizado con éxito! Artículo intercambiado.",
+                              ),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Finalizar Trato'),
+                        label: const Text("Finalizar Trato"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,

@@ -3,8 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../models/transaction.dart';
 import '../data/transaction_repository.dart';
 
+// Proveedor del cliente de Supabase para permitir desacoplamiento en tests
+final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+  return Supabase.instance.client;
+});
+
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
-  return TransactionRepository(Supabase.instance.client);
+  return TransactionRepository(ref.watch(supabaseClientProvider));
 });
 
 final userTransactionsProvider =
@@ -17,7 +22,8 @@ final userTransactionsProvider =
 class UserTransactionsNotifier extends AsyncNotifier<List<ProductTransaction>> {
   @override
   Future<List<ProductTransaction>> build() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final client = ref.watch(supabaseClientProvider);
+    final user = client.auth.currentUser;
     if (user == null) return [];
     return ref.read(transactionRepositoryProvider).getUserTransactions(user.id);
   }
@@ -28,7 +34,8 @@ class UserTransactionsNotifier extends AsyncNotifier<List<ProductTransaction>> {
       await ref
           .read(transactionRepositoryProvider)
           .createTransaction(transaction);
-      final user = Supabase.instance.client.auth.currentUser;
+      final client = ref.read(supabaseClientProvider);
+      final user = client.auth.currentUser;
       return ref
           .read(transactionRepositoryProvider)
           .getUserTransactions(user?.id ?? '');
@@ -41,7 +48,35 @@ class UserTransactionsNotifier extends AsyncNotifier<List<ProductTransaction>> {
       await ref
           .read(transactionRepositoryProvider)
           .updateTransactionStatus(transactionId, newStatus);
-      final user = Supabase.instance.client.auth.currentUser;
+      final client = ref.read(supabaseClientProvider);
+      final user = client.auth.currentUser;
+      return ref
+          .read(transactionRepositoryProvider)
+          .getUserTransactions(user?.id ?? '');
+    });
+  }
+
+  /// Procesa el cambio de estado de forma atómica actualizando el producto en base de datos
+  /// e invalidando las transacciones locales del usuario para reflejar el cambio.
+  Future<void> procesarCambioEstadoTrueque({
+    required String transactionId,
+    required String productId,
+    required TransactionStatus nuevoEstado,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      // 1. Ejecutar la mutación atómica en el repositorio via RPC
+      await ref
+          .read(transactionRepositoryProvider)
+          .actualizarEstadoTransaccionAtomica(
+            transactionId: transactionId,
+            productId: productId,
+            nuevoEstado: nuevoEstado.name,
+          );
+
+      // 2. Retornar el estado actualizado de transacciones del usuario
+      final client = ref.read(supabaseClientProvider);
+      final user = client.auth.currentUser;
       return ref
           .read(transactionRepositoryProvider)
           .getUserTransactions(user?.id ?? '');

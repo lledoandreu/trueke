@@ -31,4 +31,20 @@ class TransactionRepository {
         .update({'status': status})
         .eq('id', transactionId);
   }
+
+  /// Cambia el estado de una transacción y sincroniza el producto en una única operación atómica via RPC
+  Future<void> actualizarEstadoTransaccionAtomica({
+    required String transactionId,
+    required String productId,
+    required String nuevoEstado,
+  }) async {
+    await _supabase.rpc(
+      'finalizar_trueque_atomico',
+      params: {
+        'p_transaction_id': transactionId,
+        'p_product_id': productId,
+        'p_nuevo_estado': nuevoEstado,
+      },
+    );
+  }
 }
