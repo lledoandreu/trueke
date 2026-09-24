@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../presentation/providers/favorite_provider.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
 import 'package:trueke/features/chats/presentation/chat_detail_page.dart';
 import 'package:trueke/features/chats/providers/chat_providers.dart';
+import 'package:trueke/features/transactions/presentation/widgets/create_offer_dialog.dart';
 import 'widgets/product_description.dart';
 import 'widgets/product_gallery.dart';
 import 'widgets/product_info.dart';
@@ -88,11 +88,19 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      AppRoutes.sendTradeOffer,
-      arguments: widget.product,
-    );
+    showDialog<bool>(
+      context: context,
+      builder: (context) => CreateOfferDialog(product: widget.product),
+    ).then((success) {
+      if (success == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Oferta de trueke enviada con éxito!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
   }
 
   @override
