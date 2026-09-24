@@ -22,6 +22,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Set up Android SDK paths
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
