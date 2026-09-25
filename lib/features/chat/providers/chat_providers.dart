@@ -4,6 +4,8 @@ import '../../../core/supabase/supabase_client.dart';
 import '../data/chat_repository.dart';
 import '../data/supabase_chat_repository.dart';
 import '../models/chat_message.dart';
+import '../../products/providers/product_repository_provider.dart';
+import '../../../models/product.dart';
 
 /// Proveedor del repositorio de chat
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -23,3 +25,12 @@ final userChatRoomsStreamProvider =
       final repository = ref.watch(chatRepositoryProvider);
       return repository.streamUserChatRooms(userId);
     });
+
+/// Proveedor asíncrono para obtener un producto individual por su ID para el chat
+final chatProductProvider = FutureProvider.family<Product?, String>((
+  ref,
+  productId,
+) async {
+  final productRepo = ref.watch(productRepositoryProvider);
+  return productRepo.getProductById(productId);
+});

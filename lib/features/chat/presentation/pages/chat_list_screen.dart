@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/supabase/supabase_client.dart';
+import '../../../profile/providers/profile_provider.dart';
 import '../../providers/chat_providers.dart';
 import 'chat_screen.dart';
 
@@ -35,31 +36,130 @@ class ChatListScreen extends ConsumerWidget {
             itemCount: rooms.length,
             itemBuilder: (context, index) {
               final room = rooms[index];
-              final shortId = room.id.length > 8
-                  ? room.id.substring(0, 8)
-                  : room.id;
-              return ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.chat_bubble_outline),
-                ),
-                title: Text('Sala: $shortId'),
-                subtitle: const Text('Toca para ver la conversacion'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(roomId: room.id),
-                    ),
-                  );
-                },
-              );
+              return ChatRoomTile(room: room, currentUserId: currentUserId);
             },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
+    );
+  }
+}
+
+class ChatRoomTile extends ConsumerWidget {
+  final dynamic room;
+  final String currentUserId;
+
+  const ChatRoomTile({
+    super.key,
+    required this.room,
+    required this.currentUserId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final peerId = room.buyerId == currentUserId ? room.sellerId : room.buyerId;
+    final productAsync = ref.watch(chatProductProvider(room.productId));
+    final peerProfileAsync = ref.watch(userProfileProvider(peerId));
+
+    return productAsync.when(
+      data: (product) {
+        if (product == null) {
+          return ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.broken_image_outlined),
+            ),
+            title: const Text('Producto no disponible'),
+            subtitle: const Text('El artículo ya no existe o fue eliminado'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => _navigateToChat(context),
+          );
+        }
+
+        // Usamos el getter real de tu modelo: product.imageUrl
+        final productImg = product.imageUrl;
+
+        return ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: 48,
+              height: 48,
+              color: Colors.grey[300],
+              child: productImg.isNotEmpty
+                  ? Image.network(
+                      productImg,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.image_outlined,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
+            ),
+          ),
+          title: Text(
+            product.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: peerProfileAsync.when(
+            data: (profile) => Text(
+              'Con: ${profile.displayName}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            loading: () => const Text(
+              'Cargando usuario...',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            error: (err, stack) => const Text(
+              'Con: Usuario Trueke',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          onTap: () => _navigateToChat(context),
+        );
+      },
+      loading: () => const ListTile(
+        leading: SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        title: Text('Cargando conversación...'),
+      ),
+      error: (err, stack) => ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Colors.redAccent,
+          child: Icon(Icons.error_outline, color: Colors.white),
+        ),
+        title: const Text('Error al cargar datos del chat'),
+        subtitle: Text('$err', maxLines: 1, overflow: TextOverflow.ellipsis),
+        onTap: () => _navigateToChat(context),
+      ),
+    );
+  }
+
+  void _navigateToChat(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChatScreen(roomId: room.id)),
     );
   }
 }
