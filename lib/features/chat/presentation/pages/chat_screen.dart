@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../features/auth/auth_service.dart';
-import '../domain/models/chat_conversation.dart';
-import '../providers/chat_providers.dart';
+import '../../providers/chat_providers.dart';
+import '../../../auth/auth_service.dart';
 
-class ChatDetailPage extends ConsumerStatefulWidget {
-  final ChatConversation chat;
+class ChatScreen extends ConsumerStatefulWidget {
+  final String roomId;
 
-  const ChatDetailPage({super.key, required this.chat});
+  const ChatScreen({super.key, required this.roomId});
 
   @override
-  ConsumerState<ChatDetailPage> createState() => _ChatDetailPageState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
 
@@ -24,9 +23,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     super.dispose();
   }
 
-  Future<void> _sendMessage(String currentUserId) async {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+
+    final currentUserId = AuthService.currentUserId;
+    if (currentUserId == null) return;
 
     _messageController.clear();
 
@@ -34,17 +36,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       await ref
           .read(chatRepositoryProvider)
           .sendMessage(
-            chatId: widget.chat.id,
+            roomId: widget.roomId,
             senderId: currentUserId,
-            text: text,
+            message: text,
           );
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 60,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -56,19 +51,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserIdAsync = ref.watch(authUserIdProvider);
-    final currentUserId = currentUserIdAsync.value;
-
-    if (currentUserId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Debes iniciar sesión para ver el chat.')),
-      );
-    }
-
-    final messagesAsync = ref.watch(chatMessagesStreamProvider(widget.chat.id));
+    final messagesAsync = ref.watch(chatMessagesStreamProvider(widget.roomId));
+    final currentUserId = AuthService.currentUserId;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Chat: ${widget.chat.product}')),
+      appBar: AppBar(title: const Text('Chat de Trueke')),
       body: SafeArea(
         child: Column(
           children: [
@@ -96,8 +83,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     padding: const EdgeInsets.all(16),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final message = messages[index];
-                      final isMe = message.isMine;
+                      final msg = messages[index];
+                      final isMe = msg.senderId == currentUserId;
 
                       return Align(
                         alignment: isMe
@@ -120,22 +107,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                               bottomRight: Radius.circular(isMe ? 0 : 12),
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                message.text,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${message.createdAt.hour.toString().padLeft(2, '0')}:${message.createdAt.minute.toString().padLeft(2, '0')}',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            msg.message,
+                            style: const TextStyle(fontSize: 16),
                           ),
                         ),
                       );
@@ -143,8 +117,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) =>
-                    Center(child: Text('Error al cargar mensajes: $error')),
+                error: (err, _) =>
+                    Center(child: Text('Error al cargar mensajes: $err')),
               ),
             ),
             Padding(
@@ -158,13 +132,13 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                         hintText: 'Escribe tu mensaje...',
                         border: OutlineInputBorder(),
                       ),
-                      onSubmitted: (_) => _sendMessage(currentUserId),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.send, color: Colors.blue),
-                    onPressed: () => _sendMessage(currentUserId),
+                    onPressed: _sendMessage,
                   ),
                 ],
               ),

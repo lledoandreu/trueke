@@ -6,7 +6,7 @@ import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/favorites/favorites_page.dart';
 import 'package:trueke/features/profile/presentation/screens/profile_screen.dart';
 import 'package:trueke/features/products/publish_product_page.dart';
-import 'package:trueke/features/chats/presentation/chats_list_page.dart';
+import 'package:trueke/features/chat/presentation/pages/chat_list_screen.dart';
 
 class MainShell extends ConsumerWidget {
   final Widget? child;
@@ -27,7 +27,7 @@ class MainShell extends ConsumerWidget {
 
     final List<Widget> screens = [
       const HomePage(),
-      const ChatsListPage(),
+      const ChatListScreen(),
       const FavoritesPage(),
       ProfileScreen(userId: userId),
     ];

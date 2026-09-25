@@ -5,8 +5,8 @@ import '../../core/theme/app_colors.dart';
 import '../../presentation/providers/favorite_provider.dart';
 import '../../models/product.dart';
 import '../auth/auth_service.dart';
-import 'package:trueke/features/chats/presentation/chat_detail_page.dart';
-import 'package:trueke/features/chats/providers/chat_providers.dart';
+import 'package:trueke/features/chat/presentation/pages/chat_screen.dart';
+import 'package:trueke/features/chat/providers/chat_providers.dart';
 import 'package:trueke/features/transactions/presentation/widgets/create_offer_dialog.dart';
 import 'widgets/product_description.dart';
 import 'widgets/product_gallery.dart';
@@ -49,23 +49,26 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
     try {
       final chatRepo = ref.read(chatRepositoryProvider);
 
-      final chatEntity = await chatRepo.getOrCreateChat(
+      // Consumimos el nuevo repositorio inmutable (singular)
+      final chatRoomEntity = await chatRepo.getOrCreateChatRoom(
         productId: widget.product.id,
         sellerId: widget.product.ownerId ?? '',
         buyerId: currentUserId,
       );
 
+      // Enviamos el mensaje inicial usando las firmas nuevas del repositorio
       await chatRepo.sendMessage(
-        chatId: chatEntity.id,
+        roomId: chatRoomEntity.id,
         senderId: currentUserId,
-        text: '¡Hola! Me interesa tu artículo "${widget.product.title}".',
+        message: '¡Hola! Me interesa tu artículo "${widget.product.title}".',
       );
 
       if (!mounted) return;
 
+      // Navegamos a la nueva interfaz limpia
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => ChatDetailPage(chat: chatEntity),
+          builder: (_) => ChatScreen(roomId: chatRoomEntity.id),
         ),
       );
     } catch (e) {
@@ -105,7 +108,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final userId = ref.watch(authUserIdProvider).value;
+    final userId = AuthService.currentUserId;
     final favoriteIdsAsync = userId != null
         ? ref.watch(favoriteIdsProvider(userId))
         : const AsyncValue<List<String>>.data([]);
