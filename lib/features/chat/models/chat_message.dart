@@ -10,6 +10,7 @@ abstract class ChatMessage with _$ChatMessage {
     @JsonKey(name: 'room_id') required String roomId,
     @JsonKey(name: 'sender_id') required String senderId,
     required String message,
+    @JsonKey(name: 'is_system') @Default(false) bool isSystem,
     @JsonKey(name: 'created_at') required DateTime createdAt,
   }) = _ChatMessage;
 

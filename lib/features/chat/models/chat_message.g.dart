@@ -11,6 +11,7 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   roomId: json['room_id'] as String,
   senderId: json['sender_id'] as String,
   message: json['message'] as String,
+  isSystem: json['is_system'] as bool? ?? false,
   createdAt: DateTime.parse(json['created_at'] as String),
 );
 
@@ -20,5 +21,6 @@ Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) =>
       'room_id': instance.roomId,
       'sender_id': instance.senderId,
       'message': instance.message,
+      'is_system': instance.isSystem,
       'created_at': instance.createdAt.toIso8601String(),
     };

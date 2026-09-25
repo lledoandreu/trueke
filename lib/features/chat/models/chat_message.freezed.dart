@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatMessage {
 
- String get id;@JsonKey(name: 'room_id') String get roomId;@JsonKey(name: 'sender_id') String get senderId; String get message;@JsonKey(name: 'created_at') DateTime get createdAt;
+ String get id;@JsonKey(name: 'room_id') String get roomId;@JsonKey(name: 'sender_id') String get senderId; String get message;@JsonKey(name: 'is_system') bool get isSystem;@JsonKey(name: 'created_at') DateTime get createdAt;
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<Chat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.message, message) || other.message == message)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.message, message) || other.message == message)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,roomId,senderId,message,createdAt);
+int get hashCode => Object.hash(runtimeType,id,roomId,senderId,message,isSystem,createdAt);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, roomId: $roomId, senderId: $senderId, message: $message, createdAt: $createdAt)';
+  return 'ChatMessage(id: $id, roomId: $roomId, senderId: $senderId, message: $message, isSystem: $isSystem, createdAt: $createdAt)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $ChatMessageCopyWith<$Res>  {
   factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) _then) = _$ChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'room_id') String roomId,@JsonKey(name: 'sender_id') String senderId, String message,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'room_id') String roomId,@JsonKey(name: 'sender_id') String senderId, String message,@JsonKey(name: 'is_system') bool isSystem,@JsonKey(name: 'created_at') DateTime createdAt
 });
 
 
@@ -66,13 +66,14 @@ class _$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? roomId = null,Object? senderId = null,Object? message = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? roomId = null,Object? senderId = null,Object? message = null,Object? isSystem = null,Object? createdAt = null,}) {
   return _then(ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,isSystem: null == isSystem ? _self.isSystem : isSystem // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'is_system')  bool isSystem, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.createdAt);case _:
+return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.isSystem,_that.createdAt);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'created_at')  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'is_system')  bool isSystem, @JsonKey(name: 'created_at')  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage():
-return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.createdAt);case _:
+return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.isSystem,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'room_id')  String roomId, @JsonKey(name: 'sender_id')  String senderId,  String message, @JsonKey(name: 'is_system')  bool isSystem, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.createdAt);case _:
+return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.isSystem,_that.createdAt);case _:
   return null;
 
 }
@@ -214,13 +215,14 @@ return $default(_that.id,_that.roomId,_that.senderId,_that.message,_that.created
 @JsonSerializable()
 
 class _ChatMessage implements ChatMessage {
-  const _ChatMessage({required this.id, @JsonKey(name: 'room_id') required this.roomId, @JsonKey(name: 'sender_id') required this.senderId, required this.message, @JsonKey(name: 'created_at') required this.createdAt});
+  const _ChatMessage({required this.id, @JsonKey(name: 'room_id') required this.roomId, @JsonKey(name: 'sender_id') required this.senderId, required this.message, @JsonKey(name: 'is_system') this.isSystem = false, @JsonKey(name: 'created_at') required this.createdAt});
   factory _ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);
 
 @override final  String id;
 @override@JsonKey(name: 'room_id') final  String roomId;
 @override@JsonKey(name: 'sender_id') final  String senderId;
 @override final  String message;
+@override@JsonKey(name: 'is_system') final  bool isSystem;
 @override@JsonKey(name: 'created_at') final  DateTime createdAt;
 
 /// Create a copy of ChatMessage
@@ -236,16 +238,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.message, message) || other.message == message)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.message, message) || other.message == message)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,roomId,senderId,message,createdAt);
+int get hashCode => Object.hash(runtimeType,id,roomId,senderId,message,isSystem,createdAt);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, roomId: $roomId, senderId: $senderId, message: $message, createdAt: $createdAt)';
+  return 'ChatMessage(id: $id, roomId: $roomId, senderId: $senderId, message: $message, isSystem: $isSystem, createdAt: $createdAt)';
 }
 
 
@@ -256,7 +258,7 @@ abstract mixin class _$ChatMessageCopyWith<$Res> implements $ChatMessageCopyWith
   factory _$ChatMessageCopyWith(_ChatMessage value, $Res Function(_ChatMessage) _then) = __$ChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'room_id') String roomId,@JsonKey(name: 'sender_id') String senderId, String message,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'room_id') String roomId,@JsonKey(name: 'sender_id') String senderId, String message,@JsonKey(name: 'is_system') bool isSystem,@JsonKey(name: 'created_at') DateTime createdAt
 });
 
 
@@ -273,13 +275,14 @@ class __$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? roomId = null,Object? senderId = null,Object? message = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? roomId = null,Object? senderId = null,Object? message = null,Object? isSystem = null,Object? createdAt = null,}) {
   return _then(_ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,roomId: null == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,isSystem: null == isSystem ? _self.isSystem : isSystem // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
