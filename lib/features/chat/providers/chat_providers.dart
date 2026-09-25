@@ -6,6 +6,9 @@ import '../data/supabase_chat_repository.dart';
 import '../models/chat_message.dart';
 import '../../products/providers/product_repository_provider.dart';
 import '../../../models/product.dart';
+import '../../transactions/providers/transaction_providers.dart'
+    hide supabaseClientProvider;
+import '../../../models/transaction.dart';
 
 /// Proveedor del repositorio de chat
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -34,3 +37,36 @@ final chatProductProvider = FutureProvider.family<Product?, String>((
   final productRepo = ref.watch(productRepositoryProvider);
   return productRepo.getProductById(productId);
 });
+
+/// El proveedor cruza las transacciones del usuario en memoria para retornar el estado del trueque de este producto
+final chatRoomTransactionStatusProvider =
+    Provider.family<TransactionStatus?, String>((ref, productId) {
+      final transactionsAsync = ref.watch(userTransactionsProvider);
+
+      return transactionsAsync.maybeWhen(
+        data: (transactions) {
+          // Buscamos si hay transacciones activas para este producto
+          final match = transactions.firstWhere(
+            (t) =>
+                t.productId == productId &&
+                t.status != TransactionStatus.cancelled,
+            orElse: () => ProductTransaction(
+              id: '',
+              productId: '',
+              productTitle: '',
+              sellerId: '',
+              sellerName: '',
+              buyerId: '',
+              buyerName: '',
+              status: TransactionStatus.cancelled,
+              createdAt: _dummyDate,
+              updatedAt: _dummyDate,
+            ),
+          );
+          return match.id.isEmpty ? null : match.status;
+        },
+        orElse: () => null,
+      );
+    });
+
+final _dummyDate = DateTime.fromMillisecondsSinceEpoch(0);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/supabase/supabase_client.dart';
 import '../../../profile/providers/profile_provider.dart';
+import '../../../../models/transaction.dart'; // Corregido con un nivel más para llegar a la raíz
 import '../../providers/chat_providers.dart';
 import 'chat_screen.dart';
 
@@ -60,8 +61,12 @@ class ChatRoomTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final peerId = room.buyerId == currentUserId ? room.sellerId : room.buyerId;
+
     final productAsync = ref.watch(chatProductProvider(room.productId));
     final peerProfileAsync = ref.watch(userProfileProvider(peerId));
+    final txStatus = ref.watch(
+      chatRoomTransactionStatusProvider(room.productId),
+    );
 
     return productAsync.when(
       data: (product) {
@@ -77,7 +82,6 @@ class ChatRoomTile extends ConsumerWidget {
           );
         }
 
-        // Usamos el getter real de tu modelo: product.imageUrl
         final productImg = product.imageUrl;
 
         return ListTile(
@@ -86,7 +90,7 @@ class ChatRoomTile extends ConsumerWidget {
             child: Container(
               width: 48,
               height: 48,
-              color: Colors.grey[300],
+              color: Colors.grey,
               child: productImg.isNotEmpty
                   ? Image.network(
                       productImg,
@@ -104,11 +108,59 @@ class ChatRoomTile extends ConsumerWidget {
                     ),
             ),
           ),
-          title: Text(
-            product.title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  product.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (txStatus == TransactionStatus.accepted)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha(51),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.orange, width: 1),
+                  ),
+                  child: const Text(
+                    'RESERVADO',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else if (txStatus == TransactionStatus.completed)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withAlpha(51),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.green, width: 1),
+                  ),
+                  child: const Text(
+                    'TRUECADO',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
           subtitle: peerProfileAsync.when(
             data: (profile) => Text(
