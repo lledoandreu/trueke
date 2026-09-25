@@ -1,16 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'product_search_notifier.dart';
+import 'product_map_view.dart';
 
-class ProductSearchScreen extends ConsumerWidget {
+class ProductSearchScreen extends ConsumerStatefulWidget {
   const ProductSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductSearchScreen> createState() =>
+      _ProductSearchScreenState();
+}
+
+class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
+  bool _isListView = true; // true = Lista, false = Mapa
+
+  @override
+  Widget build(BuildContext context) {
     final searchState = ref.watch(productSearchProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar Artículos')),
+      appBar: AppBar(
+        title: const Text('Buscar Artículos'),
+        actions: [
+          IconButton(
+            icon: Icon(_isListView ? Icons.map : Icons.view_list),
+            tooltip: _isListView ? 'Ver en Mapa' : 'Ver en Lista',
+            onPressed: () {
+              setState(() {
+                _isListView = !_isListView;
+              });
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -34,6 +56,11 @@ class ProductSearchScreen extends ConsumerWidget {
                     child: Text('No se encontraron artículos disponibles.'),
                   );
                 }
+
+                if (!_isListView) {
+                  return ProductMapView(products: products);
+                }
+
                 return ListView.builder(
                   itemCount: products.length,
                   itemBuilder: (context, index) {
