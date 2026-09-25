@@ -56,11 +56,13 @@ class SupabaseChatRepository implements ChatRepository {
     required String roomId,
     required String senderId,
     required String message,
+    bool isSystem = false,
   }) async {
     await _client.from('chat_messages').insert({
       'room_id': roomId,
       'sender_id': senderId,
       'message': message,
+      'is_system': isSystem,
     });
   }
 

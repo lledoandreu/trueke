@@ -14,6 +14,7 @@ abstract class ChatRepository {
     required String roomId,
     required String senderId,
     required String message,
+    bool isSystem = false,
   });
 
   Stream<List<ChatRoom>> streamUserChatRooms(String userId);
