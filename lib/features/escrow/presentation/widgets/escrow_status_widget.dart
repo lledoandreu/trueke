@@ -79,6 +79,10 @@ class _EscrowStatusWidgetState extends ConsumerState<EscrowStatusWidget> {
     if (escrowState is EscrowLoaded) {
       final tx = escrowState.transaction;
       final isSeller = widget.currentUserId == tx.sellerId;
+      final isBuyer = widget.currentUserId == tx.buyerId;
+      final canCancel =
+          (tx.status == EscrowStatus.pendingDeposit ||
+          tx.status == EscrowStatus.heldInEscrow);
 
       return Card(
         margin: const EdgeInsets.all(12),
@@ -97,6 +101,23 @@ class _EscrowStatusWidgetState extends ConsumerState<EscrowStatusWidget> {
               if (isSeller && tx.status == EscrowStatus.heldInEscrow) ...[
                 const SizedBox(height: 16),
                 _buildLogisticsForm(tx.id),
+              ],
+              if ((isBuyer || isSeller) && canCancel) ...[
+                const Divider(height: 24),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _showCancelDialog(context, tx.id),
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    label: const Text(
+                      'Cancelar Trueque y Reembolsar',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
@@ -220,6 +241,19 @@ class _EscrowStatusWidgetState extends ConsumerState<EscrowStatusWidget> {
           ),
           const SizedBox(height: 4),
           _buildInfoRow(Icons.tag, 'Localizador:', tx.trackingNumber!),
+        ] else if (tx.status == EscrowStatus.refunded) ...[
+          Row(
+            children: [
+              const Icon(Icons.assignment_return, color: Colors.red, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Trueque cancelado. Los fondos han sido devueltos a la cuenta bancaria de origen.',
+                  style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                ),
+              ),
+            ],
+          ),
         ] else ...[
           Row(
             children: [
@@ -265,53 +299,36 @@ class _EscrowStatusWidgetState extends ConsumerState<EscrowStatusWidget> {
         children: [
           const Text(
             'Panel de Envío (Vendedor)',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: Colors.blueAccent,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _carrierController,
+            decoration: const InputDecoration(
+              labelText: 'Compañía de Transporte (Ej: Correos, SEUR)',
+              border: OutlineInputBorder(),
+              isDense: true,
             ),
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Campo obligatorio' : null,
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _carrierController,
-                  decoration: const InputDecoration(
-                    labelText: 'Courier (Ej: Correos)',
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _trackingController,
-                  decoration: const InputDecoration(
-                    labelText: 'Número Tracking',
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-              ),
-            ],
+          TextFormField(
+            controller: _trackingController,
+            decoration: const InputDecoration(
+              labelText: 'Número de Tracking / Localizador',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Campo obligatorio' : null,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                if (_formKey.currentState?.validate() ?? false) {
                   ref
                       .read(
                         escrowNotifierProvider(widget.tradeOfferId).notifier,
@@ -323,11 +340,39 @@ class _EscrowStatusWidgetState extends ConsumerState<EscrowStatusWidget> {
                       );
                 }
               },
-              icon: const Icon(Icons.send_and_archive, size: 16),
-              label: const Text(
-                'Confirmar Envío y Bloquear Fondos',
-                style: TextStyle(fontSize: 12),
-              ),
+              icon: const Icon(Icons.send),
+              label: const Text('Confirmar Envío y Notificar'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDialog(BuildContext context, String escrowId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cancelar transacción?'),
+        content: const Text(
+          'Esta acción reembolsará el total del importe custodiado de forma directa al comprador y dejará sin efecto la propuesta aceptada. Esta operación es irreversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Volver'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref
+                  .read(escrowNotifierProvider(widget.tradeOfferId).notifier)
+                  .cancelAndRefundEscrow(escrowId: escrowId);
+            },
+            child: const Text(
+              'Sí, Cancelar y Reembolsar',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
