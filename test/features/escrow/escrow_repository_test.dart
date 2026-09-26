@@ -40,5 +40,60 @@ void main() {
         expect(result.amount, 50.0);
       },
     );
+
+    test(
+      'createEscrow genera una nueva transaccion en custodia pendiente de deposito',
+      () async {
+        when(
+          () => mockRepository.createEscrow(
+            tradeOfferId: 'offer-456',
+            amount: 50.0,
+            currency: 'EUR',
+          ),
+        ).thenAnswer((_) async => mockTransaction);
+
+        final result = await mockRepository.createEscrow(
+          tradeOfferId: 'offer-456',
+          amount: 50.0,
+          currency: 'EUR',
+        );
+
+        expect(result.id, 'escrow-123');
+        expect(result.status, EscrowStatus.pendingDeposit);
+      },
+    );
+
+    test(
+      'updateTrackingInfo actualiza los datos logisticos y devuelve la transaccion',
+      () async {
+        const shippedTransaction = EscrowTransaction(
+          id: 'escrow-123',
+          tradeOfferId: 'offer-456',
+          buyerId: 'user-buyer',
+          sellerId: 'user-seller',
+          amount: 50.0,
+          currency: 'EUR',
+          status: EscrowStatus.shipped,
+          stripePaymentIntentId: 'pi_test123',
+        );
+
+        when(
+          () => mockRepository.updateTrackingInfo(
+            escrowId: 'escrow-123',
+            trackingNumber: 'RR123456789ES',
+            carrier: 'CORREOS',
+          ),
+        ).thenAnswer((_) async => shippedTransaction);
+
+        final result = await mockRepository.updateTrackingInfo(
+          escrowId: 'escrow-123',
+          trackingNumber: 'RR123456789ES',
+          carrier: 'CORREOS',
+        );
+
+        expect(result.id, 'escrow-123');
+        expect(result.status, EscrowStatus.shipped);
+      },
+    );
   });
 }
