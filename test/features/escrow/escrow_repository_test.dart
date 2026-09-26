@@ -95,5 +95,32 @@ void main() {
         expect(result.status, EscrowStatus.shipped);
       },
     );
+
+    test(
+      'cancelAndRefundEscrow transiciona el estado de la transaccion a refunded',
+      () async {
+        const refundedTransaction = EscrowTransaction(
+          id: 'escrow-123',
+          tradeOfferId: 'offer-456',
+          buyerId: 'user-buyer',
+          sellerId: 'user-seller',
+          amount: 50.0,
+          currency: 'EUR',
+          status: EscrowStatus.refunded,
+          stripePaymentIntentId: 'pi_test123',
+        );
+
+        when(
+          () => mockRepository.cancelAndRefundEscrow(escrowId: 'escrow-123'),
+        ).thenAnswer((_) async => refundedTransaction);
+
+        final result = await mockRepository.cancelAndRefundEscrow(
+          escrowId: 'escrow-123',
+        );
+
+        expect(result.id, 'escrow-123');
+        expect(result.status, EscrowStatus.refunded);
+      },
+    );
   });
 }

@@ -15,6 +15,7 @@ abstract class EscrowRepository {
     required String trackingNumber,
     required String carrier,
   });
+  Future<EscrowTransaction> cancelAndRefundEscrow({required String escrowId});
 }
 
 class SupabaseEscrowRepository implements EscrowRepository {
@@ -64,6 +65,19 @@ class SupabaseEscrowRepository implements EscrowRepository {
           'carrier': carrier,
           'status': 'shipped',
         })
+        .eq('id', escrowId)
+        .select()
+        .single();
+    return EscrowTransaction.fromJson(response);
+  }
+
+  @override
+  Future<EscrowTransaction> cancelAndRefundEscrow({
+    required String escrowId,
+  }) async {
+    final response = await _supabaseClient
+        .from('escrow_transactions')
+        .update({'status': 'refunded'})
         .eq('id', escrowId)
         .select()
         .single();
