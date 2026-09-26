@@ -51,6 +51,13 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
           ),
           Expanded(
             child: filteredProductsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Text(
+                  'Error al cargar productos: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
               data: (products) {
                 if (products.isEmpty) {
                   return const Center(
@@ -88,14 +95,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      trailing: product.price != null
-                          ? Text(
-                              '${product.price!.toStringAsFixed(2)} €',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : const Text('Trueque Puro'),
+                      trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.push<void>(
                           context,
@@ -109,9 +109,6 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) =>
-                  Center(child: Text('Error: ${error.toString()}')),
             ),
           ),
         ],

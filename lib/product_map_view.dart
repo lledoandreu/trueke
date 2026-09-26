@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'models/product.dart';
 import 'features/products/product_detail_page.dart';
+import 'features/products/providers/product_filters_provider.dart';
 
-class ProductMapView extends StatelessWidget {
+class ProductMapView extends ConsumerWidget {
   final List<Product> products;
 
   const ProductMapView({super.key, required this.products});
@@ -21,8 +23,14 @@ class ProductMapView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final initialCenter = const LatLng(40.416775, -3.703790);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filters = ref.watch(productFiltersProvider);
+
+    // Si el usuario tiene un filtro geográfico activo, centramos en su búsqueda; si no, fallback en Madrid
+    final initialCenter =
+        (filters.userLatitude != null && filters.userLongitude != null)
+        ? LatLng(filters.userLatitude!, filters.userLongitude!)
+        : const LatLng(40.416775, -3.703790);
 
     final markers = products.map((product) {
       final coordinates = _getProductCoordinates(product);

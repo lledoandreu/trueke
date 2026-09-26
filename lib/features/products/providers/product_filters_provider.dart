@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../../models/product.dart';
-import 'products_provider.dart';
+import 'product_repository_provider.dart';
 
 enum ProductSortOption { relevance, priceAsc, priceDesc, distance }
 
@@ -181,117 +180,61 @@ final productFiltersProvider =
       ProductFiltersNotifier.new,
     );
 
-final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
-  final products = ref.watch(productsProvider);
+final filteredProductsProvider = FutureProvider.autoDispose<List<Product>>((
+  ref,
+) async {
   final filters = ref.watch(productFiltersProvider);
-  final normalizedQuery = filters.query.toLowerCase();
+  final repository = ref.watch(productRepositoryProvider);
 
-  return products.whenData((items) {
-    final filteredList = items.where((product) {
-      final matchesQuery =
-          normalizedQuery.isEmpty ||
-          [
-            product.title,
-            product.description,
-            product.category,
-            product.location,
-            product.owner,
-          ].any((value) => value.toLowerCase().contains(normalizedQuery));
+  final items = await repository.getProducts(
+    query: filters.query,
+    category: filters.category,
+    userLatitude: filters.userLatitude,
+    userLongitude: filters.userLongitude,
+    radiusInKm: filters.radiusInKm,
+  );
 
-      final matchesCategory =
-          filters.category == null || product.category == filters.category;
+  final processedList = items.where((product) {
+    final matchesTradeType =
+        filters.tradeType == null || product.tradeType == filters.tradeType;
 
-      final matchesTradeType =
-          filters.tradeType == null || product.tradeType == filters.tradeType;
+    final matchesCondition =
+        filters.condition == null || product.condition == filters.condition;
 
-      final matchesCondition =
-          filters.condition == null || product.condition == filters.condition;
-
-      bool matchesPrice = true;
-      if (product.price != null) {
-        if (filters.minPrice != null && product.price! < filters.minPrice!) {
-          matchesPrice = false;
-        }
-        if (filters.maxPrice != null && product.price! > filters.maxPrice!) {
-          matchesPrice = false;
-        }
+    if (product.price != null) {
+      if (filters.minPrice != null && product.price! < filters.minPrice!) {
+        return false;
       }
-
-      bool matchesGeo = true;
-      if (filters.userLatitude != null && filters.userLongitude != null) {
-        if (product.latitude == null || product.longitude == null) {
-          matchesGeo = false;
-        } else {
-          final distanceInMeters = Geolocator.distanceBetween(
-            filters.userLatitude!,
-            filters.userLongitude!,
-            product.latitude!,
-            product.longitude!,
-          );
-          final distanceInKm = distanceInMeters / 1000.0;
-          matchesGeo = distanceInKm <= filters.radiusInKm;
-        }
+      if (filters.maxPrice != null && product.price! > filters.maxPrice!) {
+        return false;
       }
-
-      return matchesQuery &&
-          matchesCategory &&
-          matchesTradeType &&
-          matchesCondition &&
-          matchesPrice &&
-          matchesGeo;
-    }).toList();
-
-    switch (filters.sortBy) {
-      case ProductSortOption.relevance:
-        filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        break;
-
-      case ProductSortOption.priceAsc:
-        filteredList.sort((a, b) {
-          if (a.price == null && b.price == null) return 0;
-          if (a.price == null) return 1;
-          if (b.price == null) return -1;
-          return a.price!.compareTo(b.price!);
-        });
-        break;
-
-      case ProductSortOption.priceDesc:
-        filteredList.sort((a, b) {
-          if (a.price == null && b.price == null) return 0;
-          if (a.price == null) return 1;
-          if (b.price == null) return -1;
-          return b.price!.compareTo(a.price!);
-        });
-        break;
-
-      case ProductSortOption.distance:
-        if (filters.userLatitude != null && filters.userLongitude != null) {
-          filteredList.sort((a, b) {
-            if ((a.latitude == null || a.longitude == null) &&
-                (b.latitude == null || b.longitude == null)) {
-              return 0;
-            }
-            if (a.latitude == null || a.longitude == null) return 1;
-            if (b.latitude == null || b.longitude == null) return -1;
-
-            final distA = Geolocator.distanceBetween(
-              filters.userLatitude!,
-              filters.userLongitude!,
-              a.latitude!,
-              a.longitude!,
-            );
-            final distB = Geolocator.distanceBetween(
-              filters.userLatitude!,
-              filters.userLongitude!,
-              b.latitude!,
-              b.longitude!,
-            );
-            return distA.compareTo(distB);
-          });
-        }
-        break;
     }
+    return matchesTradeType && matchesCondition;
+  }).toList();
 
-    return filteredList;
-  });
+  switch (filters.sortBy) {
+    case ProductSortOption.relevance:
+      processedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      break;
+    case ProductSortOption.priceAsc:
+      processedList.sort((a, b) {
+        if (a.price == null && b.price == null) return 0;
+        if (a.price == null) return 1;
+        if (b.price == null) return -1;
+        return a.price!.compareTo(b.price!);
+      });
+      break;
+    case ProductSortOption.priceDesc:
+      processedList.sort((a, b) {
+        if (a.price == null && b.price == null) return 0;
+        if (a.price == null) return 1;
+        if (b.price == null) return -1;
+        return b.price!.compareTo(a.price!);
+      });
+      break;
+    case ProductSortOption.distance:
+      break;
+  }
+
+  return processedList;
 });
