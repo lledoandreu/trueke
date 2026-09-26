@@ -42,13 +42,28 @@ class SupabaseProfileRepository implements ProfileRepository {
     try {
       final response = await _client
           .from('user_reviews')
-          .select()
+          .select(
+            '*, profiles!user_reviews_reviewer_id_fkey(full_name, avatar_url)',
+          )
           .eq('receiver_id', userId)
           .order('created_at', ascending: false);
 
-      return (response as List<dynamic>)
-          .map((item) => UserReview.fromMap(item as Map<String, dynamic>))
-          .toList();
+      return (response as List<dynamic>).map((json) {
+        final map = json as Map<String, dynamic>;
+        final profile = map['profiles'] as Map<String, dynamic>?;
+        return UserReview(
+          id: map['id'] as String,
+          reviewerId: map['reviewer_id'] as String? ?? '',
+          receiverId: map['receiver_id'] as String? ?? '',
+          rating: (map['rating'] as num? ?? 0.0).toDouble(),
+          comment: map['comment'] as String? ?? '',
+          createdAt: map['created_at'] != null
+              ? DateTime.parse(map['created_at'] as String)
+              : DateTime.now(),
+          reviewerName: profile?['full_name'] as String? ?? 'Usuario',
+          reviewerAvatar: profile?['avatar_url'] as String? ?? '',
+        );
+      }).toList();
     } catch (_) {
       return [];
     }

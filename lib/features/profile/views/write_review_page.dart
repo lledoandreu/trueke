@@ -35,20 +35,16 @@ class _WriteReviewPageState extends ConsumerState<WriteReviewPage> {
     try {
       final currentUser = Supabase.instance.client.auth.currentUser;
       final reviewerId = currentUser?.id ?? '';
-      final reviewerName =
-          currentUser?.userMetadata?['full_name'] as String? ?? 'Usuario';
-      final reviewerAvatar =
-          currentUser?.userMetadata?['avatar_url'] as String? ?? '';
 
       await ref
-          .read(userReviewsProvider(widget.receiverId).notifier)
+          .read(reviewsRepositoryProvider)
           .addReview(
             reviewerId: reviewerId,
-            reviewerName: reviewerName,
-            reviewerAvatar: reviewerAvatar,
+            receiverId: widget.receiverId,
             rating: _selectedRating.toDouble(),
             comment: comment,
           );
+      ref.invalidate(userReviewsProvider(widget.receiverId));
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

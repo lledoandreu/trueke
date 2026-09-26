@@ -32,20 +32,17 @@ class _AddReviewDialogState extends ConsumerState<AddReviewDialog> {
     try {
       final currentUser = Supabase.instance.client.auth.currentUser;
       final reviewerId = currentUser?.id ?? '';
-      final reviewerName =
-          currentUser?.userMetadata?['full_name'] as String? ?? 'Usuario';
-      final reviewerAvatar =
-          currentUser?.userMetadata?['avatar_url'] as String? ?? '';
+      // Campos redundantes omitidos para usar join relacional nativo
 
       await ref
-          .read(userReviewsProvider(widget.receiverId).notifier)
+          .read(reviewsRepositoryProvider)
           .addReview(
             reviewerId: reviewerId,
-            reviewerName: reviewerName,
-            reviewerAvatar: reviewerAvatar,
+            receiverId: widget.receiverId,
             rating: _rating,
             comment: _commentController.text.trim(),
           );
+      ref.invalidate(userReviewsProvider(widget.receiverId));
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
