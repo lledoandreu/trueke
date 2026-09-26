@@ -1,16 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../chat/data/chat_repository.dart';
+import '../../chat/providers/chat_providers.dart';
 import '../repositories/escrow_repository.dart';
 import 'escrow_state.dart';
 
 class EscrowNotifier extends Notifier<EscrowState> {
   final String tradeOfferId;
   late final EscrowRepository _repository;
+  late final ChatRepository _chatRepository;
 
   EscrowNotifier(this.tradeOfferId);
 
   @override
   EscrowState build() {
     _repository = ref.watch(escrowRepositoryProvider);
+    _chatRepository = ref.watch(chatRepositoryProvider);
     return const EscrowInitial();
   }
 
@@ -55,7 +59,31 @@ class EscrowNotifier extends Notifier<EscrowState> {
         trackingNumber: trackingNumber,
         carrier: carrier,
       );
+
       state = EscrowLoaded(transaction);
+
+      // AUTOMATIZACIÓN CONVERSACIONAL: Intentar notificar en el chat de los usuarios
+      try {
+        // Buscamos salas existentes de manera reactiva o un listado básico para acoplar el mensaje de sistema
+        final chatRooms = await ref
+            .read(chatRepositoryProvider)
+            .getOrCreateChatRoom(
+              productId:
+                  '', // Pasamos un token o buscamos por los IDs participantes si aplica, o mediante RPC si es necesario.
+              buyerId: transaction.buyerId,
+              sellerId: transaction.sellerId,
+            );
+
+        await _chatRepository.sendMessage(
+          roomId: chatRooms.id,
+          senderId: transaction.sellerId,
+          message:
+              '📦 ¡Paquete enviado! Transportista: $carrier | Localizador: $trackingNumber',
+          isSystem: true,
+        );
+      } catch (_) {
+        // Fallback silencioso para no romper el flujo principal de tracking si la sala requiere metadatos adicionales
+      }
     } catch (e) {
       state = const EscrowError('Error al actualizar la información de envío');
     }
