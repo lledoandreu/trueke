@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'product_search_notifier.dart';
+import 'features/products/providers/product_filters_provider.dart';
 import 'product_map_view.dart';
+import 'features/products/product_detail_page.dart';
 
 class ProductSearchScreen extends ConsumerStatefulWidget {
   const ProductSearchScreen({super.key});
@@ -16,7 +17,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final searchState = ref.watch(productSearchProvider);
+    final filteredProductsAsync = ref.watch(filteredProductsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -44,16 +45,18 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
-                ref.read(productSearchProvider.notifier).filterProducts(value);
+                ref.read(productFiltersProvider.notifier).setQuery(value);
               },
             ),
           ),
           Expanded(
-            child: searchState.when(
+            child: filteredProductsAsync.when(
               data: (products) {
                 if (products.isEmpty) {
                   return const Center(
-                    child: Text('No se encontraron artículos disponibles.'),
+                    child: Text(
+                      'No se encontraron artículos disponibles con los filtros aplicados.',
+                    ),
                   );
                 }
 
@@ -67,13 +70,16 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                     final product = products[index];
                     return ListTile(
                       leading: product.imageUrl.isNotEmpty
-                          ? Image.network(
-                              product.imageUrl,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.broken_image),
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                product.imageUrl,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.broken_image),
+                              ),
                             )
                           : const Icon(Icons.image),
                       title: Text(product.title),
@@ -82,6 +88,23 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      trailing: product.price != null
+                          ? Text(
+                              '${product.price!.toStringAsFixed(2)} €',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : const Text('Trueque Puro'),
+                      onTap: () {
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (context) =>
+                                ProductDetailPage(product: product),
+                          ),
+                        );
+                      },
                     );
                   },
                 );

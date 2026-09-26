@@ -2,14 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'product_model.dart';
+import 'models/product.dart';
+import 'features/products/product_detail_page.dart';
 
 class ProductMapView extends StatelessWidget {
-  final List<ProductModel> products;
+  final List<Product> products;
 
   const ProductMapView({super.key, required this.products});
 
-  LatLng _getProductCoordinates(ProductModel product) {
+  LatLng _getProductCoordinates(Product product) {
     if (product.latitude != null && product.longitude != null) {
       return LatLng(product.latitude!, product.longitude!);
     }
@@ -89,7 +90,16 @@ class ProductMapView extends StatelessWidget {
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.swap_horizontal_circle),
                         label: const Text('Proponer Trueque'),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push<void>(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (context) =>
+                                  ProductDetailPage(product: product),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -107,7 +117,10 @@ class ProductMapView extends StatelessWidget {
     }).toList();
 
     return FlutterMap(
-      options: MapOptions(initialCenter: initialCenter, initialZoom: 11.0),
+      options: MapOptions(
+        initialCenter: initialCenter,
+        initialZoom: markers.isNotEmpty ? 11.0 : 6.0,
+      ),
       children: [
         TileLayer(
           urlTemplate: 'https://openstreetmap.org{z}/{x}/{y}.png',
