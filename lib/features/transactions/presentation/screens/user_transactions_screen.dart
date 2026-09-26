@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trueke/features/transactions/providers/transactions_provider.dart';
 import 'package:trueke/features/transactions/models/trade_transaction.dart';
+import 'package:trueke/features/escrow/presentation/widgets/escrow_status_widget.dart';
 
 class UserTransactionsScreen extends ConsumerWidget {
   final String userId;
@@ -89,7 +90,7 @@ class _TransactionsList extends ConsumerWidget {
         final tx = transactions[index];
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: ListTile(
+          child: ExpansionTile(
             title: Text('Trueke: ${tx.id.substring(0, 8)}...'),
             subtitle: Text('Estado: ${tx.status.toUpperCase()}'),
             trailing: !isSender && tx.status == 'pending'
@@ -126,6 +127,25 @@ class _TransactionsList extends ConsumerWidget {
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
+            children: [
+              if (tx.status == 'accepted')
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: EscrowStatusWidget(
+                    tradeOfferId: tx.id,
+                    currentUserId: userId,
+                  ),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'La pasarela de pago seguro y tracking logístico se activarán una vez aceptado el intercambio.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+            ],
           ),
         );
       },
