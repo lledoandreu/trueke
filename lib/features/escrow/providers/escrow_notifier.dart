@@ -62,8 +62,7 @@ class EscrowNotifier extends Notifier<EscrowState> {
   }
 }
 
-// En Riverpod 3 traditional family, la firma de inicializacion recibe solo el argumento
 final escrowNotifierProvider =
     NotifierProvider.family<EscrowNotifier, EscrowState, String>(
-      (arg) => EscrowNotifier(arg),
+      EscrowNotifier.new,
     );

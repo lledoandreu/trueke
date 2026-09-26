@@ -4,7 +4,7 @@ import 'package:trueke/features/auth/auth_service.dart';
 import 'package:trueke/features/profile/models/user_profile.dart';
 import 'package:trueke/features/profile/providers/profile_provider.dart';
 import 'package:trueke/features/transactions/presentation/pages/user_reviews_screen.dart';
-import 'package:trueke/features/transactions/presentation/pages/user_transactions_screen.dart';
+import 'package:trueke/features/transactions/presentation/screens/user_transactions_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -275,7 +275,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const UserTransactionsScreen(),
+                                  UserTransactionsScreen(userId: widget.userId),
                             ),
                           );
                         },
