@@ -64,12 +64,10 @@ class EscrowNotifier extends Notifier<EscrowState> {
 
       // AUTOMATIZACIÓN CONVERSACIONAL: Intentar notificar en el chat de los usuarios
       try {
-        // Buscamos salas existentes de manera reactiva o un listado básico para acoplar el mensaje de sistema
         final chatRooms = await ref
             .read(chatRepositoryProvider)
             .getOrCreateChatRoom(
-              productId:
-                  '', // Pasamos un token o buscamos por los IDs participantes si aplica, o mediante RPC si es necesario.
+              productId: '',
               buyerId: transaction.buyerId,
               sellerId: transaction.sellerId,
             );
@@ -82,10 +80,46 @@ class EscrowNotifier extends Notifier<EscrowState> {
           isSystem: true,
         );
       } catch (_) {
-        // Fallback silencioso para no romper el flujo principal de tracking si la sala requiere metadatos adicionales
+        // Fallback silencioso para no romper el flujo principal de tracking
       }
     } catch (e) {
       state = const EscrowError('Error al actualizar la información de envío');
+    }
+  }
+
+  Future<void> cancelAndRefundEscrow({required String escrowId}) async {
+    state = const EscrowLoading();
+    try {
+      final transaction = await _repository.cancelAndRefundEscrow(
+        escrowId: escrowId,
+      );
+
+      state = EscrowLoaded(transaction);
+
+      // AUTOMATIZACIÓN CONVERSACIONAL: Notificación de cancelación y reembolso en el chat
+      try {
+        final chatRooms = await ref
+            .read(chatRepositoryProvider)
+            .getOrCreateChatRoom(
+              productId: '',
+              buyerId: transaction.buyerId,
+              sellerId: transaction.sellerId,
+            );
+
+        await _chatRepository.sendMessage(
+          roomId: chatRooms.id,
+          senderId: transaction.sellerId,
+          message:
+              '🚨 El trueque ha sido cancelado. Depósito reembolsado automáticamente al comprador.',
+          isSystem: true,
+        );
+      } catch (_) {
+        // Fallback silencioso para no comprometer el estado del Notifier
+      }
+    } catch (e) {
+      state = const EscrowError(
+        'Error al procesar la cancelación y el reembolso',
+      );
     }
   }
 }
